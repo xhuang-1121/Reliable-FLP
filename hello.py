@@ -1,13 +1,9 @@
 print('hello, VS code')
 
 
-def test():
-    print("test")
-
-
 def test2():
     print('haha')
-    print('wofule')
+    a = [1, 2, 3, 4]
 
 
 test()
