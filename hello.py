@@ -6,7 +6,8 @@ def test():
 
 
 def test2():
-    print('hahaha')
+    print('haha')
+    print('wofule')
 
 
 test()
