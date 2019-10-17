@@ -8,6 +8,7 @@ def test2():
 
 def test3():
     print("test")
+    print('it is me')
 
 
 test2()
