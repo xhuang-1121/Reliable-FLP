@@ -6,5 +6,8 @@ def test2():
     a = [1, 2, 3, 4]
 
 
-test()
+def test3():
+    print("test")
+
+
 test2()
