@@ -47,19 +47,10 @@ class GA:
     def funEvaluatePop(self, fp_listdictPop):
         '''
         该函数用于评价种群；
-        若采用（μ+λ）strategy，则初始种群和演化中的种群的规模会不一样;
-        在交叉操作完成后，会将原种群(μ)和初始种群(2μ)合并，而原种群已经
-        在上一代被评价过了，所以不用重复评价
         '''
-        iSize = len(fp_listdictPop)
-        if iSize == self.iPopSize:
-            for i in range(iSize):
-                fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
-                    fp_listdictPop[i]['chromosome'])
-        else:
-            for i in range(self.iPopSize, iSize):
-                fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
-                    fp_listdictPop[i]['chromosome'])
+        for i in range(len(fp_listdictPop)):
+            fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
+                fp_listdictPop[i]['chromosome'])
         listdictPopBefSurv = fp_listdictPop
         return listdictPopBefSurv
 
@@ -127,3 +118,6 @@ class GA:
                     'fitness': 0.0
                 })
         return listdictPopAfCros
+
+    def funMutation(self, fp_listdictPopAfCros):
+        for i in range()
