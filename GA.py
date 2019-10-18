@@ -120,4 +120,11 @@ class GA:
         return listdictPopAfCros
 
     def funMutation(self, fp_listdictPopAfCros):
-        for i in range()
+        for i in range(len(fp_listdictPopAfCros)):
+            for j in range(self.iIndLen):
+                # For every individual's every gene, determining whether mutating
+                if np.random.rand() < self.fMutRate:
+                    fp_listdictPopAfCros[i]['chromosome'][j] = (
+                        fp_listdictPopAfCros[i]['chromosome'][j] + 1) % 2
+        listdictPopAfMuta = fp_listdictPopAfCros
+        return listdictPopAfMuta
