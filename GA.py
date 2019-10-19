@@ -36,8 +36,8 @@ class GA:
 
     def funEvaluateInd(self, fp_aChromosome):
         '''
-        Note that the fitness should be the larger the better, 
-        or the method "funSelectParents" and other function which 
+        Note that the fitness should be the larger the better,
+        or the method "funSelectParents" and other function which
         used fitness need be corrected.
         '''
         # TODO 根据目标函数定义fitness function;
@@ -47,6 +47,7 @@ class GA:
     def funEvaluatePop(self, fp_listdictPop):
         '''
         该函数用于评价种群；
+        return: listdictPopBefSurv
         '''
         for i in range(len(fp_listdictPop)):
             fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
@@ -54,7 +55,7 @@ class GA:
         listdictPopBefSurv = fp_listdictPop
         return listdictPopBefSurv
 
-    def funSelectParents(self, fp_listdictPop, fp_iIndIndex=None):
+    def funSelectParents(self, fp_listdictOrigPop, fp_iIndIndex=None):
         '''
         轮盘赌方法选择交叉用的两个个体；
         这里有两种方法，一是每次都选出两个个体进行交叉；
@@ -65,40 +66,45 @@ class GA:
         '''
         fProb = []
         listdictParents = []
-        fFitnessSum = sum(ind['fitness'] for ind in fp_listdictPop)
-        for i in range(len(fp_listdictPop)):
-            fProb.append(fp_listdictPop[i]['fitness'] / fFitnessSum)
-        if fp_iIndIndex == None:
-            aParents = np.random.choice(fp_listdictPop, size=2, p=fProb)
-            listdictParents = list(aParents)
+        fFitnessSum = sum(ind['fitness'] for ind in fp_listdictOrigPop)
+        for i in range(len(fp_listdictOrigPop)):
+            fProb.append(fp_listdictOrigPop[i]['fitness'] / fFitnessSum)
+        if fp_iIndIndex is None:
+            adictParents = np.random.choice(fp_listdictOrigPop,
+                                            size=2,
+                                            p=fProb)
+            listdictParents.append(adictParents[0])
+            listdictParents.append(adictParents[1])
         else:
-            listdictParents.append(fp_listdictPop[fp_iIndIndex])
+            listdictParents.append(fp_listdictOrigPop[fp_iIndIndex])
             listdictParents.append(
-                list(np.random.choice(fp_listdictPop, size=1, p=fProb)))
+                np.random.choice(fp_listdictOrigPop, size=1, p=fProb)[0])
+        # 根据实验，listdictParents跟fp_listdictOrigPop是一体的，改变一个会影响另外一个
         return listdictParents
 
-    def funCrossover(self, fp_listdictPop, fp_fCrosRate, fp_iHowSelPare):
+    def funCrossover(self, fp_listdictOrigPop, fp_fCrosRate, fp_iHowSelPare):
         '''
         The value of formal parameter "fp_iSelPare" determines how to choose
-        parents. If fp_iSelPare==1, the "fp_iIndIndex" of "funSelectParents" 
+        parents. If fp_iSelPare==1, the "fp_iIndIndex" of "funSelectParents"
         should be set to "None" and choose the first parents selection approach.
         Otherwise choose the second approach.
         '''
-        if len(fp_listdictPop) != self.iPopSize:
+        if len(fp_listdictOrigPop) != self.iPopSize:
             print(
                 "Someting wrong. The population size before crossover is abnormal."
             )
 
+        # listdictPop = copy.deepcopy(fp_listdictOrigPop)
         listdictPopAfCros = []
-        for i in range(len(fp_listdictPop)):
+        for i in range(len(fp_listdictOrigPop)):
             if np.random.rand() < fp_fCrosRate:
                 aOffs1 = np.zeros((self.iIndLen, ), dtype=np.int)
                 aOffs2 = np.zeros((self.iIndLen, ), dtype=np.int)
                 listdictParents = []
                 if fp_iHowSelPare == 1:
-                    listdictParents = self.funSelectParents(fp_listdictPop)
+                    listdictParents = self.funSelectParents(fp_listdictOrigPop)
                 else:
-                    listdictParents = self.funSelectParents(fp_listdictPop,
+                    listdictParents = self.funSelectParents(fp_listdictOrigPop,
                                                             fp_iIndIndex=i)
                 # One-point crossover
                 crossPoint = np.random.randint(1, self.iIndLen)
@@ -117,6 +123,7 @@ class GA:
                     'chromosome': aOffs2,
                     'fitness': 0.0
                 })
+        # "listdictPopAfCros" has no relation to "fp_listdictOrigPop"
         return listdictPopAfCros
 
     def funMutation(self, fp_listdictPopAfCros):
@@ -126,5 +133,19 @@ class GA:
                 if np.random.rand() < self.fMutRate:
                     fp_listdictPopAfCros[i]['chromosome'][j] = (
                         fp_listdictPopAfCros[i]['chromosome'][j] + 1) % 2
-        listdictPopAfMuta = fp_listdictPopAfCros
+        listdictPopAfMuta = self.funEvaluatePop(
+            fp_listdictPopAfCros)  # evaluate population
+        # listdictPopAfMuta is the same one as fp_listdictPopAfCros
         return listdictPopAfMuta
+
+    def funSurvival(self, fp_listdictOrigPop, fp_listdictPopAfMuta):
+        '''
+        parameters: original population and population after crossover and mutation
+        survival strategy: (μ+λ) strategy
+        '''
+        # combine the original pop and after-mutation-pop, and overwrite the original pop
+        fp_listdictOrigPop.extend(fp_listdictPopAfMuta)
+        # ascending sort
+        fp_listdictOrigPop.sort(key=itemgetter('fitness'), reverse=True)
+        # only the first μ can survive
+        fp_listdictOrigPop = fp_listdictOrigPop[:self.iPopSize]
