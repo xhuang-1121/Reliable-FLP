@@ -13,6 +13,3 @@ def test2():
 def test3():
     print("test")
     print("coding is cool!")
-
-
-test2()  
