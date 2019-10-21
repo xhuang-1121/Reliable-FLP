@@ -26,6 +26,10 @@ class GA:
         self.fMutRate = listParameters[4]
 
     def funInitializePop(self):
+        '''
+        Initialize the population.
+        @return listdictInitPop
+        '''
         listdictInitPop = []
         for i in range(self.iPopSize):
             ind = Individal(self.iIndLen)
@@ -38,6 +42,7 @@ class GA:
     def funEvaluateInd(self, fp_aChromosome):
         '''
         Note that the fitness should be the larger the better, or the method "funSelectParents" and other function which used fitness need be corrected.
+        @return: fFitness
         '''
         # TODO 根据目标函数定义fitness function;
         fFitness = sum(fp_aChromosome)
@@ -45,7 +50,7 @@ class GA:
 
     def funEvaluatePop(self, fp_listdictPop):
         '''
-        该函数用于评价种群；
+        This method is used to evaluate the population.
         @return: listdictPopBefSurv
         '''
         for i in range(len(fp_listdictPop)):
@@ -56,12 +61,11 @@ class GA:
 
     def funSelectParents(self, fp_listdictCurrPop, fp_iIndIndex=None):
         '''
-        轮盘赌方法选择交叉用的两个个体；
-        这里有两种方法，一是每次都选出两个个体进行交叉；
-        二是对每个个体，都给它再从种群中选一个进行交叉；
-        When the value of "fp_iIndIndex" is None, choose the first approach,
-        otherwise choose the second approach;
+        Roulte wheel method to choose parents.
+        If the value of "fp_iIndIndex" is None, choose both 2 parents by roulte wheel method.
+        If "fp_iIndIndex" is an integer, i.e., individual index, choose only one parent by roulte wheel method. The other one is the individual whose index is "fp_iIndIndex".
         Note that our fitness value is the larger the better.
+        @return: listdictParents
         '''
         fProb = []
         listdictParents = []
@@ -152,6 +156,10 @@ class GA:
         return fp_listdictCurrPop
 
     def funGA_main(self):
+        '''
+        The main process of genetic algorithm.
+        @return listdictFinalPop
+        '''
         listdictInitPop = self.funInitializePop()
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
         listdictCurrPop = copy.deepcopy(listdictInitPop)
@@ -166,6 +174,9 @@ class GA:
 
 
 if __name__ == '__main__':
+    '''
+    Test the genetic algorithm.
+    '''
     # listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
     listParameters = [10, 10, 10, 0.9, 0.1]
     geneticAlgo = GA(listParameters)
