@@ -1,5 +1,4 @@
 from __future__ import print_function, division
-import random
 import math
 from operator import itemgetter
 import numpy as np
@@ -17,7 +16,9 @@ class Individal:
 
 class GA:
     def __init__(self, listParameters):
-        # listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
+        '''
+        listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
+        '''
         self.iGenNum = listParameters[0]
         self.iPopSize = listParameters[1]
         self.iIndLen = listParameters[2]
@@ -36,24 +37,22 @@ class GA:
 
     def funEvaluateInd(self, fp_aChromosome):
         '''
-        Note that the fitness should be the larger the better,
-        or the method "funSelectParents" and other function which
-        used fitness need be corrected.
+        Note that the fitness should be the larger the better, or the method "funSelectParents" and other function which used fitness need be corrected.
         '''
         # TODO 根据目标函数定义fitness function;
-        fFitness = 0
+        fFitness = sum(fp_aChromosome)
         return fFitness
 
     def funEvaluatePop(self, fp_listdictPop):
         '''
         该函数用于评价种群；
-        return: listdictPopBefSurv
+        @return: listdictPopBefSurv
         '''
         for i in range(len(fp_listdictPop)):
             fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
                 fp_listdictPop[i]['chromosome'])
-        listdictPopBefSurv = fp_listdictPop
-        return listdictPopBefSurv
+        listdictPopAfEval = fp_listdictPop
+        return listdictPopAfEval
 
     def funSelectParents(self, fp_listdictCurrPop, fp_iIndIndex=None):
         '''
@@ -82,7 +81,7 @@ class GA:
         # 根据实验，listdictParents跟fp_listdictCurrPop是一体的，改变一个会影响另外一个
         return listdictParents
 
-    def funCrossover(self, fp_listdictCurrPop, fp_fCrosRate, fp_iHowSelPare):
+    def funCrossover(self, fp_listdictCurrPop, fp_fCrosRate, fp_iHowSelPare=None):
         '''
         The value of formal parameter "fp_iSelPare" determines how to choose parents. If fp_iSelPare==1, the "fp_iIndIndex" of "funSelectParents" should be set to "None" and choose two parents from the population according to roulette wheel.
         Otherwise only choose one parent according to roulette wheel.
@@ -155,6 +154,7 @@ class GA:
     def funGA_main(self):
         listdictInitPop = self.funInitializePop()
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
+        listdictCurrPop = copy.deepcopy(listdictInitPop)
         for gen in range(self.iGenNum):
             listdictPopAfCros = self.funCrossover(listdictCurrPop,
                                                   self.fCrosRate)
@@ -163,3 +163,11 @@ class GA:
                                                listdictPopAfMuta)
         listdictFinalPop = listdictCurrPop
         return listdictFinalPop
+
+
+if __name__ == '__main__':
+    # listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
+    listParameters = [10, 10, 10, 0.9, 0.1]
+    geneticAlgo = GA(listParameters)
+    finalPop = geneticAlgo.funGA_main()
+    print(finalPop)
