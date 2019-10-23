@@ -85,9 +85,12 @@ class GA:
         # 根据实验，listdictParents跟fp_listdictCurrPop是一体的，改变一个会影响另外一个
         return listdictParents
 
-    def funCrossover(self, fp_listdictCurrPop, fp_fCrosRate, fp_iHowSelPare=None):
+    def funCrossover(self,
+                     fp_listdictCurrPop,
+                     fp_fCrosRate,
+                     fp_iHowSelPare=None):
         '''
-        The value of formal parameter "fp_iSelPare" determines how to choose parents. If fp_iSelPare==1, the "fp_iIndIndex" of "funSelectParents" should be set to "None" and choose two parents from the population according to roulette wheel.
+        The value of formal parameter "fp_iHowSelPare" determines how to choose parents. If fp_iHowSelPare==1, the "fp_iIndIndex" of "funSelectParents" should be set to "None" and choose two parents from the population according to roulette wheel.
         Otherwise only choose one parent according to roulette wheel.
         return: listdictPopAfCros
         '''
@@ -144,7 +147,9 @@ class GA:
 
     def funSurvival(self, fp_listdictCurrPop, fp_listdictPopAfMuta):
         '''
-        parameters: current population and population after crossover and mutation
+        @fp_listdictCurrPop: current population
+        @fp_listdictPopAfMuta: population after crossover and mutation
+        @return: fp_listdictCurrPop
         survival strategy: (μ+λ) strategy
         '''
         # combine the current pop and after-mutation-pop, and overwrite the current pop
