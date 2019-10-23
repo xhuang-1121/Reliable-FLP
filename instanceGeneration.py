@@ -45,7 +45,7 @@ if __name__ == '__main__':
     listPara:
     0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB
     '''
-    listPara = [10, 2, 0, 1000, 500, 1500, 0, 1]
+    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1]
     generateInstances = Instances(listPara)
     generateInstances.funGenerateInstances()
     print("trans cost: \n", generateInstances.af_2d_TransCost)
