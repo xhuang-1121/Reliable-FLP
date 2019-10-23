@@ -4,7 +4,7 @@ import numpy as np
 class Instances:
     def __init__(self, fp_listParameters):
         '''
-        @parameters: 0-iSitesNum, 1-iScenNum, 2-iDemandLB, 3-iDemandUB, 4-iFixedCostLB, 5-iFixedCostUP, 6-iCoordinateLB, 7-iCoordinateUB
+        @parameters: 0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB
         '''
         self.iSitesNum = fp_listParameters[0]
         self.iScenNum = fp_listParameters[1]
@@ -37,3 +37,18 @@ class Instances:
                                          self.a_2d_SitesCoordi[j])
                 self.af_2d_TransCost[i][j] = self.af_2d_TransCost[j][
                     i] = temCost
+
+
+if __name__ == '__main__':
+    '''
+    Test the code.
+    listPara:
+    0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB
+    '''
+    listPara = [10, 2, 0, 1000, 500, 1500, 0, 1]
+    generateInstances = Instances(listPara)
+    generateInstances.funGenerateInstances()
+    print("trans cost: \n", generateInstances.af_2d_TransCost)
+    print("fixed cost: \n", generateInstances.aiFixedCost)
+    print("coordinate: \n", generateInstances.a_2d_SitesCoordi)
+    print("demands: \n", generateInstances.aiDemands)
