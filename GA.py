@@ -3,6 +3,7 @@ import math
 from operator import itemgetter
 import numpy as np
 import copy
+import instanceGeneration
 
 
 class Individal:
@@ -15,15 +16,17 @@ class Individal:
 
 
 class GA:
-    def __init__(self, listParameters):
+    def __init__(self, listGAParameters, fp_obInstance):
         '''
-        listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
+        Initialize parameters of GA, import instance
+        @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate]
         '''
-        self.iGenNum = listParameters[0]
-        self.iPopSize = listParameters[1]
-        self.iIndLen = listParameters[2]
-        self.fCrosRate = listParameters[3]
-        self.fMutRate = listParameters[4]
+        self.iGenNum = listGAParameters[0]
+        self.iPopSize = listGAParameters[1]
+        self.iIndLen = listGAParameters[2]
+        self.fCrosRate = listGAParameters[3]
+        self.fMutRate = listGAParameters[4]
+        self.obInstance = fp_obInstance
 
     def funInitializePop(self):
         '''
@@ -181,9 +184,19 @@ class GA:
 if __name__ == '__main__':
     '''
     Test the genetic algorithm.
+
+    listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate]
+
+    listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB]
+
+    The value of  iPopSize and iSitesNum should be equal.
     '''
-    # listParameters = [iGenNum, iPopSize, iIndLen, fCrosRate, fMutRate]
-    listParameters = [10, 10, 10, 0.9, 0.1]
-    geneticAlgo = GA(listParameters)
+    listGAParameters = [10, 10, 10, 0.9, 0.1]
+    listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1]
+    # generate instance
+    obInstance = instanceGeneration.Instances(listInstPara)
+    obInstance.funGenerateInstances()
+    # genetic algorithm
+    geneticAlgo = GA(listGAParameters, obInstance)
     finalPop = geneticAlgo.funGA_main()
     print(finalPop)
