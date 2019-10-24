@@ -4,7 +4,7 @@ import numpy as np
 class Instances:
     def __init__(self, fp_listParameters):
         '''
-        @parameters: 0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB
+        @parameters: 0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
         '''
         self.iSitesNum = fp_listParameters[0]
         self.iScenNum = fp_listParameters[1]
@@ -14,6 +14,7 @@ class Instances:
         self.iFixedCostUB = fp_listParameters[5]
         self.iCoordinateLB = fp_listParameters[6]
         self.iCoordinateUB = fp_listParameters[7]
+        self.fFaciFailProb = fp_listParameters[8]
 
         self.a_2d_SitesCoordi = np.zeros((self.iSitesNum, 2))
         self.aiDemands = np.zeros(self.iSitesNum, dtype=np.int)
@@ -43,9 +44,9 @@ if __name__ == '__main__':
     '''
     Test the code.
     listPara:
-    0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB
+    0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
     '''
-    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1]
+    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     generateInstances = Instances(listPara)
     generateInstances.funGenerateInstances()
     print("trans cost: \n", generateInstances.af_2d_TransCost)
