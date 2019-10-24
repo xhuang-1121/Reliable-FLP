@@ -19,14 +19,19 @@ class GA:
     def __init__(self, listGAParameters, fp_obInstance):
         '''
         Initialize parameters of GA, import instance
-        @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate]
+        @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
         '''
         self.iGenNum = listGAParameters[0]
         self.iPopSize = listGAParameters[1]
         self.iIndLen = listGAParameters[2]
         self.fCrosRate = listGAParameters[3]
         self.fMutRate = listGAParameters[4]
+        self.fAlpha = listGAParameters[5]
         self.obInstance = fp_obInstance
+        if self.obInstance.iSitesNum != self.iIndLen:
+            print(
+                "Wrong. The number of candidate sites is not equal to the individual length. Please check."
+            )
 
     def funInitializePop(self):
         '''
@@ -48,7 +53,34 @@ class GA:
         @return: fFitness
         '''
         # TODO 根据目标函数定义fitness function;
-        fFitness = sum(fp_aChromosome)
+        w1 = 0
+        w2 = 0
+        w1 += np.dot(fp_aChromosome, self.obInstance.aiFixedCost)
+        iSelcSitesNum = np.sum(fp_aChromosome)
+
+        for i in range(self.iIndLen):  # i represents different customers.
+            listSelcSitesTransCostForI = np.multiply(
+                fp_aChromosome, self.obInstance.af_2d_TransCost[i])
+            if iSelcSitesNum != len(listSelcSitesTransCostForI):
+                print("Wrong in funEvaluatedInd(). Please check.")
+
+            listSelcSitesTransCostForI = [
+                value
+                for (index, value) in enumerate(listSelcSitesTransCostForI)
+                if value != 0
+            ]
+            listSortedTransCostForI = sorted(
+                listSelcSitesTransCostForI)  # ascending order
+
+            w1 += self.obInstance.aiDemands[i] * listSortedTransCostForI[0]
+
+            # j represents the facilities that allocated to the customer i
+            for j in range(len(listSortedTransCostForI)):
+                p = self.obInstance.fFaciFailProb
+                w2 += self.obInstance.aiDemands[i] * listSortedTransCostForI[
+                    j] * (p ^ j) * (1 - p)
+                pass
+        fFitness = self.alpha * w1 + (1 - self.alpha) * w2
         return fFitness
 
     def funEvaluatePop(self, fp_listdictPop):
@@ -185,13 +217,13 @@ if __name__ == '__main__':
     '''
     Test the genetic algorithm.
 
-    listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate]
+    listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB]
 
     The value of  iPopSize and iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 10, 0.9, 0.1]
+    listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
     listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1]
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
