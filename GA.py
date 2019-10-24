@@ -57,30 +57,34 @@ class GA:
         w2 = 0
         w1 += np.dot(fp_aChromosome, self.obInstance.aiFixedCost)
         iSelcSitesNum = np.sum(fp_aChromosome)
+        if iSelcSitesNum == 0:
+            return 0
 
         for i in range(self.iIndLen):  # i represents different customers.
-            listSelcSitesTransCostForI = np.multiply(
+            aSelcSitesTransCostForI = np.multiply(
                 fp_aChromosome, self.obInstance.af_2d_TransCost[i])
-            if iSelcSitesNum != len(listSelcSitesTransCostForI):
-                print("Wrong in funEvaluatedInd(). Please check.")
 
-            listSelcSitesTransCostForI = [
-                value
-                for (index, value) in enumerate(listSelcSitesTransCostForI)
+            aSelcSitesTransCostForI = [
+                value for (index, value) in enumerate(aSelcSitesTransCostForI)
                 if value != 0
             ]
-            listSortedTransCostForI = sorted(
-                listSelcSitesTransCostForI)  # ascending order
+            # if site i is selected, it would be the level-0 facility serving for customer i and trans cost is 0.
+            if fp_aChromosome[i] == 1:
+                aSelcSitesTransCostForI = np.append(aSelcSitesTransCostForI, 0)
+            if iSelcSitesNum != len(aSelcSitesTransCostForI):
+                print("Wrong in funEvaluatedInd(). Please check.")
+            aSortedTransCostForI = sorted(
+                aSelcSitesTransCostForI)  # ascending order
 
-            w1 += self.obInstance.aiDemands[i] * listSortedTransCostForI[0]
+            w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
             # j represents the facilities that allocated to the customer i
-            for j in range(len(listSortedTransCostForI)):
+            for j in range(len(aSortedTransCostForI)):
                 p = self.obInstance.fFaciFailProb
-                w2 += self.obInstance.aiDemands[i] * listSortedTransCostForI[
-                    j] * (p ^ j) * (1 - p)
-                pass
-        fFitness = self.alpha * w1 + (1 - self.alpha) * w2
+                w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
+                    j] * pow(p, j) * (1 - p)
+
+        fFitness = 1 / (self.fAlpha * w1 + (1 - self.fAlpha) * w2)  # The larger, the better.
         return fFitness
 
     def funEvaluatePop(self, fp_listdictPop):
@@ -221,10 +225,10 @@ if __name__ == '__main__':
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB]
 
-    The value of  iPopSize and iSitesNum should be equal.
+    The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
-    listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1]
+    listGAParameters = [10, 10, 3, 0.9, 0.1, 0.5]
+    listInstPara = [3, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
