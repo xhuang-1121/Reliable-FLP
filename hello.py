@@ -1,4 +1,14 @@
-print('hello, VS code')
+import numpy as np
+import matplotlib.pyplot as plt
+ 
+x=[0,1]
+y=[0,1]
+ 
+plt.figure()
+plt.plot(x,y)
+plt.xlabel("time(s)")
+plt.ylabel("value(m)")
+plt.title("A simple plot")
 
 
 def test2():
@@ -17,6 +27,3 @@ def test3():
     print(b)
     print(c)
     return c
-
-tem1 = test2()
-tem2 = test3()
