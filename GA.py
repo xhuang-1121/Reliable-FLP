@@ -52,7 +52,7 @@ class GA:
         Note that the fitness should be the larger the better, or the method "funSelectParents" and other function which used fitness need be corrected.
         @return: fFitness
         '''
-        # TODO 根据目标函数定义fitness function;
+        # define fitness function according to objective function;
         w1 = 0
         w2 = 0
         w1 += np.dot(fp_aChromosome, self.obInstance.aiFixedCost)
@@ -68,7 +68,7 @@ class GA:
                 value for (index, value) in enumerate(aSelcSitesTransCostForI)
                 if value != 0
             ]
-            # if site i is selected, it would be the level-0 facility serving for customer i and trans cost is 0.
+            # if site i is selected, it would be missed in the above step and its trans cost is 0.
             if fp_aChromosome[i] == 1:
                 aSelcSitesTransCostForI = np.append(aSelcSitesTransCostForI, 0)
             if iSelcSitesNum != len(aSelcSitesTransCostForI):
@@ -84,7 +84,8 @@ class GA:
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
 
-        fFitness = 1 / (self.fAlpha * w1 + (1 - self.fAlpha) * w2)  # The larger, the better.
+        # The larger, the better.
+        fFitness = 1 / (self.fAlpha * w1 + (1 - self.fAlpha) * w2)
         return fFitness
 
     def funEvaluatePop(self, fp_listdictPop):
@@ -205,6 +206,7 @@ class GA:
         @return listdictFinalPop
         '''
         listdictInitPop = self.funInitializePop()
+        # By this time, both CurrPop and InitPop point to the same variable.
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
         listdictCurrPop = copy.deepcopy(listdictInitPop)
         for gen in range(self.iGenNum):
@@ -223,12 +225,12 @@ if __name__ == '__main__':
 
     listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
 
-    listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB]
+    listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 3, 0.9, 0.1, 0.5]
-    listInstPara = [3, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    listGAParameters = [10, 10, 5, 0.9, 0.1, 0.5]
+    listInstPara = [5, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
