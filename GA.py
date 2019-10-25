@@ -4,6 +4,8 @@ from operator import itemgetter
 import numpy as np
 import copy
 import instanceGeneration
+import matplotlib.pyplot as plt
+import heapq
 
 
 class Individal:
@@ -194,7 +196,7 @@ class GA:
         '''
         # combine the current pop and after-mutation-pop, and overwrite the current pop
         fp_listdictCurrPop.extend(fp_listdictPopAfMuta)
-        # ascending sort
+        # descending sort
         fp_listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
         # only the first μ can survive
         fp_listdictCurrPop = fp_listdictCurrPop[:self.iPopSize]
@@ -209,13 +211,23 @@ class GA:
         # By this time, both CurrPop and InitPop point to the same variable.
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
         listdictCurrPop = copy.deepcopy(listdictInitPop)
+        # record the fitness of the best individual for every generation
+        listfBestIndFitness = []
+        listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
+        listfBestIndFitness.append(listdictBestInd[0]['fitness'])
         for gen in range(self.iGenNum):
             listdictPopAfCros = self.funCrossover(listdictCurrPop,
                                                   self.fCrosRate)
             listdictPopAfMuta = self.funMutation(listdictPopAfCros)
             listdictCurrPop = self.funSurvival(listdictCurrPop,
                                                listdictPopAfMuta)
+            listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
         listdictFinalPop = listdictCurrPop
+        # plot figure
+        genNum = list(np.linspace(0, self.iGenNum, num=(self.iGenNum + 1)))
+        plt.figure()
+        plt.plot(genNum, listfBestIndFitness)
+        plt.savefig("line.jpg")
         return listdictFinalPop
 
 
