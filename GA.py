@@ -78,7 +78,7 @@ class GA:
             aSortedTransCostForI = sorted(
                 aSelcSitesTransCostForI)  # ascending order
 
-            w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
+            # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
             # j represents the facilities that allocated to the customer i
             for j in range(len(aSortedTransCostForI)):
