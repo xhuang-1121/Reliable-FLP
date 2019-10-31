@@ -1,2 +1,3 @@
-# GAforFLP
-A genetic algorithm for reliable and robust FLP
+# Reliable FLP
+An genetic algorithm for reliable FLP.
+Lagrangian relaxation method for reliable FLP.
