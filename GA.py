@@ -87,7 +87,7 @@ class GA:
                     j] * pow(p, j) * (1 - p)
 
         # The larger, the better.
-        fFitness = 1 / (self.fAlpha * w1 + (1 - self.fAlpha) * w2)
+        fFitness = 1 / (w1 + self.fAlpha * w2)
         return fFitness
 
     def funEvaluatePop(self, fp_listdictPop):
