@@ -73,3 +73,15 @@ class LagrangianRelaxation:
                             a3dAlloSolYijr[i][j][r] = 1
         # Until now we get Y_{ijr}. Next we should check whether Y_{ijr} is feasible for original problem.
         # TODO 检查是否是可行解
+        feasible = self.funCheckFeasible(iRealFaciNum, a3dAlloSolYijr)
+        return aSelcSolXj, a3dAlloSolYijr, feasible
+
+    def funCheckFeasible(self, fp_iRealFaciNum, fp_a3dAlloSolYijr):
+        for i in range(self.iCandidateSitesNum):
+            for r in range(fp_iRealFaciNum):
+                constraint1 = 0
+                for j in range(self.iCandidateSitesNum):
+                    constraint1 += fp_a3dAlloSolYijr[i][j][r]
+                if constraint1 != 1:
+                    return False
+        return True
