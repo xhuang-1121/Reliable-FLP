@@ -57,6 +57,8 @@ class GA:
         # define fitness function according to objective function;
         w1 = 0
         w2 = 0
+        if fp_aChromosome.size != self.obInstance.aiFixedCost.size:
+            print("Wrong. Please make sure that the size of variable \"fp_aChromosome\" and \"self.obInstance.aiFixedCost\" equal.")
         w1 += np.dot(fp_aChromosome, self.obInstance.aiFixedCost)
         iSelcSitesNum = np.sum(fp_aChromosome)
         if iSelcSitesNum == 0:
