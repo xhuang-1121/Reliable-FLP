@@ -21,6 +21,7 @@ class LagrangianRelaxation:
         self.a3dAlloSolYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum), dtype=np.int)
         self.fLowerBoundZLambda = 0
         self.fUpperbound = 0
+        self.iRealFaciNum = 0
 
     def funSolveRelaxationProblem(self):
         '''
@@ -61,26 +62,26 @@ class LagrangianRelaxation:
         self.fLowerBoundZLambda += sum(map(sum, self.a2dLambda))
 
         # Until now we get X_j and the lower bound. Next we need to determine Y_{ijr}.
-        iRealFaciNum = np.sum(aLocaSolXj == 1)
+        self.iRealFaciNum = np.sum(aLocaSolXj == 1)
         for i in range(self.iCandidateSitesNum):
-            if iRealFaciNum == 1:
+            if self.iRealFaciNum == 1:
                 # np.where() return "tuple" type data. The element of the tuple is arrays.
                 faciIndex = np.where(aLocaSolXj == 1)[0][0]
                 if (a3dPsi[i][faciIndex][0] < 0) and (a3dPsi[i][faciIndex][0] == np.min(a3dPsi[i][faciIndex][0])):
                     a3dAlloSolYijr[i][faciIndex][0] = 1
             else:
                 for j in range(self.iCandidateSitesNum):
-                    for r in range(iRealFaciNum):
-                        if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:iRealFaciNum])):
+                    for r in range(self.iRealFaciNum):
+                        if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
                             a3dAlloSolYijr[i][j][r] = 1
         # Until now we get Y_{ijr}. Next we should check whether Y_{ijr} is feasible for original problem.
         # TODO 检查是否是可行解
-        feasible = self.funCheckFeasible(iRealFaciNum, a3dAlloSolYijr)
+        feasible = self.funCheckFeasible(a3dAlloSolYijr)
         return aLocaSolXj, a3dAlloSolYijr, feasible
 
-    def funCheckFeasible(self, fp_iRealFaciNum, fp_a3dAlloSolYijr):
+    def funCheckFeasible(self, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):
-            for r in range(fp_iRealFaciNum):
+            for r in range(self.iRealFaciNum):
                 constraint1 = 0
                 for j in range(self.iCandidateSitesNum):
                     constraint1 += fp_a3dAlloSolYijr[i][j][r]
@@ -126,3 +127,30 @@ class LagrangianRelaxation:
                     j] * pow(p, j) * (1 - p)
 
         self.fUpperbound = w1 + self.fAlpha * w2
+
+    def funUpdateMultiplierLambda(self, fp_beta_n, fp_upperBound, fp_lowerBound_n):
+        '''
+        Compute the (n+1)th iteration's multiplier, i.e., λ_{ir}.
+        @n: The iteration num.
+        @fp_beta_n: The value of β for the n-th iteration.
+        @fp_upperBound: The best upper bound until now.
+        @fp_lowBound_n: The value of lower bound for the n-th iteration.
+        '''
+        sumYijr = 0
+        fTempA = 0
+        arrayOfSumYijr = np.zeros((self.iCandidateSitesNum, self.iRealFaciNum))
+        a2dLambda_nextIter = np.zeros((self.iCandidateSitesNum, self.iRealFaciNum))
+        # "aFaciIndex" stores indexes of selected facilities.
+        aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
+        for i in range(self.iCandidateSitesNum):
+            for r in range(self.iRealFaciNum):
+                for j in aFaciIndex:
+                    sumYijr += self.a3dAlloSolYijr[i][j][r]
+                arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
+                fTempA += pow((1 - sumYijr), 2)
+
+        stepSize = fp_beta_n * (fp_upperBound - fp_lowerBound_n) / fTempA
+        for i in range(self.iCandidateSitesNum):
+            for r in range(self.iRealFaciNum):
+                a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
+        return a2dLambda_nextIter
