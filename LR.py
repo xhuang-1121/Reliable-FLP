@@ -5,12 +5,13 @@ import numpy as np
 class LagrangianRelaxation:
     def __init__(self, fp_listParameters, fp_obInstance):
         '''
-        @fp_listParameters=[0:iMaxIterationNum, 1:fInitalStepSize, 2:fBeta, 3:fAlpha]
+        @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
         '''
         self.iMaxIterNum = fp_listParameters[0]
-        self.fInitStepSize = fp_listParameters[1]
-        self.fBeta = fp_listParameters[2] 
+        self.fBeta = fp_listParameters[1]
+        self.fBetaMin = fp_listParameters[2]
         self.fAlpha = fp_listParameters[3]
+        self.fToleranceEpsilon = fp_listParameters[4]  # Used in funTerminateCondition()
         self.obInstance = fp_obInstance
 
         self.iCandidateSitesNum = self.obInstance.iSitesNum
@@ -20,47 +21,53 @@ class LagrangianRelaxation:
         self.aLocaSolXj = np.zeros(self.iCandidateSitesNum, dtype=np.int)
         # allocation decision
         self.a3dAlloSolYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum), dtype=np.int)
-        self.fLowerBoundZLambda = 0
-        self.fUpperbound = 0
+        self.fBestLowerBoundZLambda = 0
+        self.fBestUpperBound = float('inf')
         self.iRealFaciNum = 0
+        self.feasible = False
 
     def funSolveRelaxationProblem(self):
         '''
         Solve the relaxation problem and give a lower bound of the optimal value of the original problem.
-        @return: aLocaSolXj, a3dAlloSolYijr, feasible
+        @return: aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
         '''
         # location decision
         aLocaSolXj = np.zeros(self.iCandidateSitesNum, dtype=np.int)
         # allocation decision
         a3dAlloSolYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum), dtype=np.int)
+        # relaxation problem's object value, lower bound
+        fLowerBound = 0
         # Psi, i.e., ψ
         a3dPsi = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum))
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 for r in range(self.iCandidateSitesNum):
-                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) - self.a2dLambda[i][r]
+                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) - self.a2dLambda[i][r]
 
         afGamma = np.zeros((self.iCandidateSitesNum,))
+        count = 0
         for j in range(self.iCandidateSitesNum):
             tempA = 0
-            count = 0
             for i in range(self.iCandidateSitesNum):
                 fMinPsi = np.min(a3dPsi[i][j])
                 tempA += min(0, fMinPsi)
-            afGamma[j] = self.obInstance.aiFixedCost + tempA
+                #tempA += fMinPsi
+            afGamma[j] = self.obInstance.aiFixedCost[j] + tempA
             if afGamma[j] < 0:
                 aLocaSolXj[j] = 1
             else:
                 count += 1
 
-        if count == self.iCandidateSitesNum:
+        if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
             # np.where() return "tuple" type data. The element of the tuple is arrays.
-            indexJ = np.where(afGamma == np.min(afGamma))[0][0]
-            aLocaSolXj[indexJ] = 1
+            aSortedGamma = sorted(afGamma)  # default ascending order
+            aIndexJ = np.where(aSortedGamma < aSortedGamma[2])[0]
+            aLocaSolXj[aIndexJ[0]] = 1
+            aLocaSolXj[aIndexJ[1]] = 1
 
         for j in range(self.iCandidateSitesNum):
-            self.fLowerBoundZLambda += afGamma[j] * aLocaSolXj[j]
-        self.fLowerBoundZLambda += sum(map(sum, self.a2dLambda))
+            fLowerBound += afGamma[j] * aLocaSolXj[j]
+        fLowerBound += np.sum(self.a2dLambda)  # sum(map(sum, self.a2dLambda))
 
         # Until now we get X_j and the lower bound. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
@@ -76,9 +83,8 @@ class LagrangianRelaxation:
                         if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
                             a3dAlloSolYijr[i][j][r] = 1
         # Until now we get Y_{ijr}. Next we should check whether Y_{ijr} is feasible for original problem.
-        # TODO 检查是否是可行解
         feasible = self.funCheckFeasible(a3dAlloSolYijr)
-        return aLocaSolXj, a3dAlloSolYijr, feasible
+        return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
 
     def funCheckFeasible(self, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):
@@ -95,6 +101,7 @@ class LagrangianRelaxation:
         @fp_aLocaSolXj: facility location decision
         Compute an upper bound of the original problem.
         '''
+        fUpperBound = 0
         w1 = 0
         w2 = 0
         if fp_aLocaSolXj.size != self.iCandidateSitesNum or self.obInstance.aiFixedCost.size != self.iCandidateSitesNum:
@@ -115,9 +122,8 @@ class LagrangianRelaxation:
             if fp_aLocaSolXj[i] == 1:
                 aSelcSitesTransCostForI = np.append(aSelcSitesTransCostForI, 0)
             if iSelcSitesNum != len(aSelcSitesTransCostForI):
-                print("Wrong in funEvaluatedInd(). Please check.")
-            aSortedTransCostForI = sorted(
-                aSelcSitesTransCostForI)  # ascending order
+                print("Wrong in funUpperBound(). Please check.")
+            aSortedTransCostForI = sorted(aSelcSitesTransCostForI)  # ascending order
 
             # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
@@ -127,14 +133,12 @@ class LagrangianRelaxation:
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
 
-        self.fUpperbound = w1 + self.fAlpha * w2
+        fUpperBound = w1 + self.fAlpha * w2
+        return fUpperBound
 
-    def funUpdateMultiplierLambda(self, fp_beta_n, fp_upperBound, fp_lowerBound_n):
+    def funUpdateMultiplierLambda(self, fp_lowerBound_n):
         '''
         Compute the (n+1)th iteration's multiplier, i.e., λ_{ir}.
-        @n: The iteration num.
-        @fp_beta_n: The value of β for the n-th iteration.
-        @fp_upperBound: The best upper bound until now.
         @fp_lowBound_n: The value of lower bound for the n-th iteration.
         '''
         fTempA = 0
@@ -150,14 +154,80 @@ class LagrangianRelaxation:
                 arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
                 fTempA += pow((1 - sumYijr), 2)
 
-        stepSize = fp_beta_n * (fp_upperBound - fp_lowerBound_n) / fTempA
+        stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / fTempA
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iCandidateSitesNum):
                 a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
+        '''
+        Initialize Lagrangian multiplier λir
+        '''
         fDisdanceBar = np.sum(self.obInstance.af_2d_TransCost) / pow(self.iCandidateSitesNum, 2)
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iCandidateSitesNum):
                 self.a2dLambda[i][r] = self.obInstance.aiDemands[i] * fDisdanceBar / pow(10, r+2)
+
+    def funMeetTerminationCondition(self, fp_n):
+        '''
+        @fp_lowerBound_n: The value of lower bound for the n-th iteration.
+        @return: "True" represents the process should be terminated.
+        '''
+        if ((self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestLowerBoundZLambda) < self.fToleranceEpsilon:
+            print("1111111111111111111")
+            return True
+        elif fp_n > self.iMaxIterNum:
+            print("222222222222222222222")
+            return True
+        elif self.fBeta < self.fBetaMin:
+            print("333333333333333333")
+            return True
+        else:
+            return False
+
+
+if __name__ == '__main__':
+    '''
+    listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
+
+    listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
+    '''
+    listParameters = [600, 2.0, 1e-8, 1.0, 0.001]
+    listInstPara = [5, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    # Generate instance
+    obInstance = instanceGeneration.Instances(listInstPara)
+    obInstance.funGenerateInstances()
+    # Lagrangian relaxation
+    meetTerminationCondition = False
+    fLowerBound = 0
+    fUpperBound = 0
+    n = 0  # Iteration number
+    nonImproveIterNum = 0
+    LR = LagrangianRelaxation(listParameters, obInstance)
+    LR.funInitMultiplierLambda()
+    while meetTerminationCondition is False:
+        LR.aLocaSolXj, LR.a3dAlloSolYijr, LR.feasible, fLowerBound = LR.funSolveRelaxationProblem()
+        fUpperBound = LR.funUpperBound(LR.aLocaSolXj)
+        if fLowerBound > LR.fBestLowerBoundZLambda and fLowerBound < LR.fBestUpperBound:
+            LR.fBestLowerBoundZLambda = fLowerBound
+        else:
+            nonImproveIterNum += 1
+            if nonImproveIterNum == 30:
+                LR.fBeta /= 2
+                nonImproveIterNum = 0
+        if fUpperBound < LR.fBestUpperBound:
+            LR.fBestUpperBound = fUpperBound
+        if LR.feasible is True:
+            print("Feasible solution found.")
+            break
+        LR.a2dLambda = LR.funUpdateMultiplierLambda(fLowerBound)
+        meetTerminationCondition = LR.funMeetTerminationCondition(n)
+        n += 1        
+    print("n: ", n)
+    print("Xj: ", LR.aLocaSolXj)
+    print("Upper bound: ", LR.fBestUpperBound)
+    print("Lower bound: ", LR.fBestLowerBoundZLambda)
+    print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestLowerBoundZLambda)
+    print()
+
