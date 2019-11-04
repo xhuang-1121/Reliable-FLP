@@ -5,16 +5,17 @@ import numpy as np
 class LagrangianRelaxation:
     def __init__(self, fp_listParameters, fp_obInstance):
         '''
-        @fp_listParameters=[0:iMaxIterationNum, 1:fInitalStepSize, 2:fBeta, 3: a2dLagMultiplier, 4:fAlpha]
+        @fp_listParameters=[0:iMaxIterationNum, 1:fInitalStepSize, 2:fBeta, 3:fAlpha]
         '''
         self.iMaxIterNum = fp_listParameters[0]
         self.fInitStepSize = fp_listParameters[1]
-        self.fBeta = fp_listParameters[2]
-        self.a2dLambda = fp_listParameters[3]  # lambda: Lagrangian multiplier
-        self.fAlpha = fp_listParameters[4]
+        self.fBeta = fp_listParameters[2] 
+        self.fAlpha = fp_listParameters[3]
         self.obInstance = fp_obInstance
 
         self.iCandidateSitesNum = self.obInstance.iSitesNum
+        # lambda: Lagrangian multiplier
+        self.a2dLambda = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # location decision
         self.aLocaSolXj = np.zeros(self.iCandidateSitesNum, dtype=np.int)
         # allocation decision
@@ -136,14 +137,14 @@ class LagrangianRelaxation:
         @fp_upperBound: The best upper bound until now.
         @fp_lowBound_n: The value of lower bound for the n-th iteration.
         '''
-        sumYijr = 0
         fTempA = 0
-        arrayOfSumYijr = np.zeros((self.iCandidateSitesNum, self.iRealFaciNum))
-        a2dLambda_nextIter = np.zeros((self.iCandidateSitesNum, self.iRealFaciNum))
+        arrayOfSumYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
+        a2dLambda_nextIter = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # "aFaciIndex" stores indexes of selected facilities.
         aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iRealFaciNum):
+                sumYijr = 0
                 for j in aFaciIndex:
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
                 arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
@@ -151,7 +152,7 @@ class LagrangianRelaxation:
 
         stepSize = fp_beta_n * (fp_upperBound - fp_lowerBound_n) / fTempA
         for i in range(self.iCandidateSitesNum):
-            for r in range(self.iRealFaciNum):
+            for r in range(self.iCandidateSitesNum):
                 a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
         return a2dLambda_nextIter
 
