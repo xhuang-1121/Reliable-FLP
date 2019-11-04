@@ -154,3 +154,9 @@ class LagrangianRelaxation:
             for r in range(self.iRealFaciNum):
                 a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
         return a2dLambda_nextIter
+
+    def funInitMultiplierLambda(self):
+        fDisdanceBar = np.sum(self.obInstance.af_2d_TransCost) / pow(self.iCandidateSitesNum, 2)
+        for i in range(self.iCandidateSitesNum):
+            for r in range(self.iCandidateSitesNum):
+                self.a2dLambda[i][r] = self.obInstance.aiDemands[i] * fDisdanceBar / pow(10, r+2)
