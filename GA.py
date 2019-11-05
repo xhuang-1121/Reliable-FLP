@@ -243,8 +243,8 @@ if __name__ == '__main__':
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 5, 0.9, 0.1, 0.5]
-    listInstPara = [5, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
+    listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()

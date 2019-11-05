@@ -39,70 +39,58 @@ class LagrangianRelaxation:
         fLowerBound = 0
         # Psi, i.e., ψ
         a3dPsi = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum))
+        # Phi, i.e., φ
+        aPhi = np.zeros((self.iCandidateSitesNum,))
+        # compute Psi
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 for r in range(self.iCandidateSitesNum):
-                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) - self.a2dLambda[i][r]
+                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][r]
+        # compute Phi
+        for j in range(self.iCandidateSitesNum):
+            fSumLambda = 0
+            for i in range(self.iCandidateSitesNum):
+                fSumLambda += self.a2dLambda[i][j]
+            aPhi[j] = self.obInstance.aiFixedCost[j] - fSumLambda
 
-        afGamma = np.zeros((self.iCandidateSitesNum,))
+        # determine Xj
         count = 0
         for j in range(self.iCandidateSitesNum):
-            tempA = 0
-            for i in range(self.iCandidateSitesNum):
-                fMinPsi = np.min(a3dPsi[i][j])
-                tempA += min(0, fMinPsi)
-                #tempA += fMinPsi
-            afGamma[j] = self.obInstance.aiFixedCost[j] + tempA
-            if afGamma[j] < 0:
+            if aPhi[j] < 0:
                 aLocaSolXj[j] = 1
             else:
                 count += 1
-
         if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
-            # np.where() return "tuple" type data. The element of the tuple is arrays.
-            aSortedGamma = sorted(afGamma)  # default ascending order
-            aIndexJ = np.where(afGamma < aSortedGamma[2])[0]
+            aSortedPhi = sorted(aPhi)
+            aIndexJ = np.where(aPhi < aSortedPhi[2])[0]
             aLocaSolXj[aIndexJ[0]] = 1
             aLocaSolXj[aIndexJ[1]] = 1
 
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
         for i in range(self.iCandidateSitesNum):
-            if self.iRealFaciNum == 1: # 修改过后这种情况不可能出现
-                # np.where() return "tuple" type data. The element of the tuple is arrays.
-                faciIndex = np.where(aLocaSolXj == 1)[0][0]
-                if (a3dPsi[i][faciIndex][0] < 0) and (a3dPsi[i][faciIndex][0] == np.min(a3dPsi[i][faciIndex][0])):
-                    a3dAlloSolYijr[i][faciIndex][0] = 1
-            else:
-                for j in range(self.iCandidateSitesNum):
-                    for r in range(self.iRealFaciNum):
-                        if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
-                        #if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
-                            a3dAlloSolYijr[i][j][r] = 1
+            for r in range(self.iRealFaciNum):
+                fMinPsiJ = a3dPsi[i][0][r]
+                fMinPsiJIndex = 0
+                for j in range(1, self.iCandidateSitesNum):
+                    if a3dPsi[i][j][r] < fMinPsiJ:
+                        fMinPsiJ = a3dPsi[i][j][r]
+                        fMinPsiJIndex = j
+                a3dAlloSolYijr[i][fMinPsiJIndex][r] = 1
+                # Compute lower bound
+                fLowerBound += a3dPsi[i][fMinPsiJIndex][r]
 
         # Compute lower bound
-        for j in range(self.iCandidateSitesNum):
-            fLowerBound += afGamma[j] * aLocaSolXj[j]
-        for i in range(self.iCandidateSitesNum):
-            for r in range(self.iRealFaciNum):
-                for j in range(self.iCandidateSitesNum):
-                    if aLocaSolXj[j] == 1 and a3dAlloSolYijr[i][j][r] == 1:
-                        fLowerBound += self.a2dLambda[i][r]
-            # fLowerBound += np.min(self.a2dLambda[i]) # 或者用max?
-            # fLowerBound += self.a2dLambda[i][r]
-        # fLowerBound += np.sum(self.a2dLambda)  # sum(map(sum, self.a2dLambda))
+        fLowerBound += np.dot(aPhi, aLocaSolXj)
 
         # Until now we get Y_{ijr}. Next we should check whether Y_{ijr} is feasible for original problem.
-        feasible = self.funCheckFeasible(a3dAlloSolYijr)
+        feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
         return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
 
-    def funCheckFeasible(self, fp_a3dAlloSolYijr):
+    def funCheckFeasible(self, fp_aLocaSolXj, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):
-            for r in range(self.iRealFaciNum):
-                constraint1 = 0
-                for j in range(self.iCandidateSitesNum):
-                    constraint1 += fp_a3dAlloSolYijr[i][j][r]
-                if constraint1 != 1:
+            for j in range(self.iCandidateSitesNum):
+                if sum(fp_a3dAlloSolYijr[i][j]) > fp_aLocaSolXj[j]:
                     return False
         return True
 
@@ -118,8 +106,10 @@ class LagrangianRelaxation:
             print("Wrong. Please make sure that the size of variable \"fp_aLocaSolXj\" and \"self.obInstance.aiFixedCost\" correct.")
         w1 += np.dot(fp_aLocaSolXj, self.obInstance.aiFixedCost)
         iSelcSitesNum = np.sum(fp_aLocaSolXj)
+        if self.iRealFaciNum != iSelcSitesNum:
+            print("Wrong. Something wrong in funUpperBound().")
         if iSelcSitesNum == 0:
-            return 0
+            print("Wrong. Something wrong in upperBound().")
         for i in range(self.iCandidateSitesNum):  # i represents different customers.
             aSelcSitesTransCostForI = np.multiply(
                 fp_aLocaSolXj, self.obInstance.af_2d_TransCost[i])
@@ -135,10 +125,8 @@ class LagrangianRelaxation:
                 print("Wrong in funUpperBound(). Please check.")
             aSortedTransCostForI = sorted(aSelcSitesTransCostForI)  # ascending order
 
-            # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
-
             # j represents the facilities that allocated to the customer i
-            for j in range(len(aSortedTransCostForI)):
+            for j in range(iSelcSitesNum):
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
@@ -151,43 +139,44 @@ class LagrangianRelaxation:
         Compute the (n+1)th iteration's multiplier, i.e., λ_{ir}.
         @fp_lowBound_n: The value of lower bound for the n-th iteration.
         '''
-        fTempA = 0
+        denominatorOfStepSize = 0
         arrayOfSumYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         a2dLambda_nextIter = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # "aFaciIndex" stores indexes of selected facilities.
         aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
         for i in range(self.iCandidateSitesNum):
-            for r in range(self.iRealFaciNum):
+            for j in aFaciIndex:
                 sumYijr = 0
-                for j in aFaciIndex:
+                for r in range(self.iRealFaciNum):
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
-                arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
-                fTempA += pow((1 - sumYijr), 2)
+                arrayOfSumYijr[i][j] = sumYijr  # Stored and used for compute λ_(n+1)
+                denominatorOfStepSize += pow((sumYijr - aLocaSolXj[j]), 2)
 
-        stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / fTempA
+        stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / denominatorOfStepSize
         for i in range(self.iCandidateSitesNum):
-            for r in range(self.iCandidateSitesNum):
-                a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
+            for j in range(self.iCandidateSitesNum):
+                a2dLambda_nextIter[i][j] = self.a2dLambda[i][j] + stepSize * (arrayOfSumYijr[i][j] - aLocaSolXj[j])
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
+                '''
                 if a2dLambda_nextIter[i][r] < 0:
                     a2dLambda_nextIter[i][r] = 0
+                '''
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
         '''
         Initialize Lagrangian multiplier λir
         '''
-        fDisdanceBar = np.sum(self.obInstance.af_2d_TransCost) / pow(self.iCandidateSitesNum, 2)
         for i in range(self.iCandidateSitesNum):
-            for r in range(self.iCandidateSitesNum):
-                self.a2dLambda[i][r] = self.obInstance.aiDemands[i] * fDisdanceBar / pow(10, r+2)
+            for j in range(self.iCandidateSitesNum):
+                self.a2dLambda[i][j] = self.obInstance.aiDemands[i] / self.iCandidateSitesNum
 
     def funMeetTerminationCondition(self, fp_n):
         '''
         @fp_lowerBound_n: The value of lower bound for the n-th iteration.
         @return: "True" represents the process should be terminated.
         '''
-        if self.fBestLowerBoundZLambda > 0 and ((self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestLowerBoundZLambda) < self.fToleranceEpsilon:
+        if self.fBestLowerBoundZLambda > 0 and ((self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestUpperBound) < self.fToleranceEpsilon:
             print("1111111111111111111")
             return True
         elif fp_n > self.iMaxIterNum:
@@ -207,7 +196,7 @@ if __name__ == '__main__':
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
     listParameters = [600, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
