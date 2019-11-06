@@ -171,12 +171,12 @@ class LagrangianRelaxation:
             for j in range(self.iCandidateSitesNum):
                 self.a2dLambda[i][j] = self.obInstance.aiDemands[i] / self.iCandidateSitesNum
 
-    def funMeetTerminationCondition(self, fp_n):
+    def funMeetTerminationCondition(self, fp_lowerBound_n, fp_n):
         '''
         @fp_lowerBound_n: The value of lower bound for the n-th iteration.
         @return: "True" represents the process should be terminated.
         '''
-        if self.fBestLowerBoundZLambda > 0 and ((self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestUpperBound) < self.fToleranceEpsilon:
+        if ((self.fBestUpperBound - fp_lowerBound_n) / self.fBestUpperBound) < self.fToleranceEpsilon:
             print("1111111111111111111")
             return True
         elif fp_n > self.iMaxIterNum:
@@ -220,19 +220,19 @@ if __name__ == '__main__':
             LR.aLocaSolXj = aLocaSolXj
             UBupdateNum += 1
         # if fLowerBound > LR.fBestLowerBoundZLambda and fLowerBound < LR.fBestUpperBound:
-        if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
+        # if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
             LR.fBestLowerBoundZLambda = fLowerBound
             LBupdateNum += 1
         else:
             nonImproveIterNum += 1
-            if nonImproveIterNum == 30:
+            if (nonImproveIterNum % 30) == 0:
                 LR.fBeta /= 2
                 nonImproveIterNum = 0
         if LR.feasible is True:
             print("Feasible solution found.")
             break
         LR.a2dLambda = LR.funUpdateMultiplierLambda(fLowerBound)
-        meetTerminationCondition = LR.funMeetTerminationCondition(n)
+        meetTerminationCondition = LR.funMeetTerminationCondition(fLowerBound, n)
         n += 1
     print("n: ", n)
     print("UB update number: ", UBupdateNum)

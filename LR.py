@@ -68,7 +68,7 @@ class LagrangianRelaxation:
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
         for i in range(self.iCandidateSitesNum):
-            if self.iRealFaciNum == 1: # 修改过后这种情况不可能出现
+            if self.iRealFaciNum == 1:  # 修改过后这种情况不可能出现
                 # np.where() return "tuple" type data. The element of the tuple is arrays.
                 faciIndex = np.where(aLocaSolXj == 1)[0][0]
                 if (a3dPsi[i][faciIndex][0] < 0) and (a3dPsi[i][faciIndex][0] == np.min(a3dPsi[i][faciIndex][0])):
@@ -182,12 +182,12 @@ class LagrangianRelaxation:
             for r in range(self.iCandidateSitesNum):
                 self.a2dLambda[i][r] = self.obInstance.aiDemands[i] * fDisdanceBar / pow(10, r+2)
 
-    def funMeetTerminationCondition(self, fp_n):
+    def funMeetTerminationCondition(self, fp_lowerBound_n, fp_n):
         '''
         @fp_lowerBound_n: The value of lower bound for the n-th iteration.
         @return: "True" represents the process should be terminated.
         '''
-        if self.fBestLowerBoundZLambda > 0 and ((self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestLowerBoundZLambda) < self.fToleranceEpsilon:
+        if self.fBestUpperBound > fp_lowerBound_n and ((self.fBestUpperBound - fp_lowerBound_n) / fp_lowerBound_n) < self.fToleranceEpsilon:
             print("1111111111111111111")
             return True
         elif fp_n > self.iMaxIterNum:
@@ -206,7 +206,7 @@ if __name__ == '__main__':
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
-    listParameters = [600, 2.0, 1e-8, 1.0, 0.001]
+    listParameters = [600, 2.0, 1e-8, 1.0, 0.0001]
     listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
             LR.aLocaSolXj = aLocaSolXj
             UBupdateNum += 1
         # if fLowerBound > LR.fBestLowerBoundZLambda and fLowerBound < LR.fBestUpperBound:
-        if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
+        # if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
             LR.fBestLowerBoundZLambda = fLowerBound
             LBupdateNum += 1
         else:
@@ -243,7 +243,7 @@ if __name__ == '__main__':
             print("Feasible solution found.")
             break
         LR.a2dLambda = LR.funUpdateMultiplierLambda(fLowerBound)
-        meetTerminationCondition = LR.funMeetTerminationCondition(n)
+        meetTerminationCondition = LR.funMeetTerminationCondition(fLowerBound, n)
         n += 1
     print("n: ", n)
     print("UB update number: ", UBupdateNum)
