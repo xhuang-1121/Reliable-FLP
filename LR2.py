@@ -46,13 +46,14 @@ class LagrangianRelaxation:
             for j in range(self.iCandidateSitesNum):
                 for r in range(self.iCandidateSitesNum):
                     a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][r]
+        i = j = r = 0
         # compute Phi
         for j in range(self.iCandidateSitesNum):
             fSumLambda = 0
             for i in range(self.iCandidateSitesNum):
                 fSumLambda += self.a2dLambda[i][j]
             aPhi[j] = self.obInstance.aiFixedCost[j] - fSumLambda
-
+        i = j = 0
         # determine Xj
         count = 0
         for j in range(self.iCandidateSitesNum):
@@ -65,20 +66,19 @@ class LagrangianRelaxation:
             aIndexJ = np.where(aPhi < aSortedPhi[2])[0]
             aLocaSolXj[aIndexJ[0]] = 1
             aLocaSolXj[aIndexJ[1]] = 1
-
+        j = 0
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
         for i in range(self.iCandidateSitesNum):
+            aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+            for j in range(1, self.iCandidateSitesNum):
+                aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order
             for r in range(self.iRealFaciNum):
-                fMinPsiJ = a3dPsi[i][0][r]
-                fMinPsiJIndex = 0
-                for j in range(1, self.iCandidateSitesNum):
-                    if a3dPsi[i][j][r] < fMinPsiJ:
-                        fMinPsiJ = a3dPsi[i][j][r]
-                        fMinPsiJIndex = j
-                a3dAlloSolYijr[i][fMinPsiJIndex][r] = 1
+                iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
+                a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
                 # Compute lower bound
-                fLowerBound += a3dPsi[i][fMinPsiJIndex][r]
+                fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
 
         # Compute lower bound
         fLowerBound += np.dot(aPhi, aLocaSolXj)
@@ -151,16 +151,15 @@ class LagrangianRelaxation:
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
                 arrayOfSumYijr[i][j] = sumYijr  # Stored and used for compute λ_(n+1)
                 denominatorOfStepSize += pow((sumYijr - aLocaSolXj[j]), 2)
-
+        i = j = r = 0
         stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / denominatorOfStepSize
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 a2dLambda_nextIter[i][j] = self.a2dLambda[i][j] + stepSize * (arrayOfSumYijr[i][j] - aLocaSolXj[j])
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
-                '''
-                if a2dLambda_nextIter[i][r] < 0:
-                    a2dLambda_nextIter[i][r] = 0
-                '''
+                if a2dLambda_nextIter[i][j] < 0:
+                    a2dLambda_nextIter[i][j] = 0
+                
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):

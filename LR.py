@@ -43,7 +43,7 @@ class LagrangianRelaxation:
             for j in range(self.iCandidateSitesNum):
                 for r in range(self.iCandidateSitesNum):
                     a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) - self.a2dLambda[i][r]
-
+        i = j = r = 0
         afGamma = np.zeros((self.iCandidateSitesNum,))
         count = 0
         for j in range(self.iCandidateSitesNum):
@@ -51,13 +51,13 @@ class LagrangianRelaxation:
             for i in range(self.iCandidateSitesNum):
                 fMinPsi = np.min(a3dPsi[i][j])
                 tempA += min(0, fMinPsi)
-                #tempA += fMinPsi
+                # tempA += fMinPsi
             afGamma[j] = self.obInstance.aiFixedCost[j] + tempA
             if afGamma[j] < 0:
                 aLocaSolXj[j] = 1
             else:
                 count += 1
-
+        i = j = 0
         if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
             # np.where() return "tuple" type data. The element of the tuple is arrays.
             aSortedGamma = sorted(afGamma)  # default ascending order
@@ -77,12 +77,13 @@ class LagrangianRelaxation:
                 for j in range(self.iCandidateSitesNum):
                     for r in range(self.iRealFaciNum):
                         if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
-                        #if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
+                        # if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
                             a3dAlloSolYijr[i][j][r] = 1
-
+        i = j = r = 0
         # Compute lower bound
         for j in range(self.iCandidateSitesNum):
             fLowerBound += afGamma[j] * aLocaSolXj[j]
+        j = 0
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iRealFaciNum):
                 for j in range(self.iCandidateSitesNum):
@@ -163,7 +164,7 @@ class LagrangianRelaxation:
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
                 arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
                 fTempA += pow((1 - sumYijr), 2)
-
+        i = j = r = 0
         stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / fTempA
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iCandidateSitesNum):
