@@ -74,7 +74,7 @@ class LagrangianRelaxation:
             aPsiIJ0 = np.array([a3dPsi[i][0][0]])
             for j in range(1, self.iCandidateSitesNum):
                 aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order
+            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
             for r in range(self.iRealFaciNum):
                 iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
                 a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
