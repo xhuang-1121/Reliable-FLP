@@ -1,5 +1,4 @@
 from __future__ import print_function, division
-import math
 from operator import itemgetter
 import numpy as np
 import copy
@@ -98,10 +97,29 @@ class GA:
         @return: listdictPopBefSurv
         '''
         for i in range(len(fp_listdictPop)):
+            # make sure that at least 2 facilities are established to garantee reliability.
+            if sum(fp_listdictPop[i]['chromosome']) < 2:
+                self.funModifyInd(fp_listdictPop[i]['chromosome'])
+
             fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
                 fp_listdictPop[i]['chromosome'])
         listdictPopAfEval = fp_listdictPop
         return listdictPopAfEval
+
+    def funModifyInd(self, fp_aChromosome):
+        '''
+        At least 2 facilitis are established to garantee the reliable.
+        The modify of "fp_aChromosome" will influent the real aChromosome.
+        '''
+        iRealFaciNum = sum(fp_aChromosome)
+        aSortedFixedCost = sorted(self.obInstance.aiFixedCost)  # default ascending order
+        while iRealFaciNum < 2:
+            for j in range(2):
+                if fp_aChromosome[np.where(self.obInstance.aiFixedCost == aSortedFixedCost[j])[0][0]] == 1:
+                    continue
+                else:
+                    fp_aChromosome[np.where(self.obInstance.aiFixedCost == aSortedFixedCost[j])[0][0]] = 1
+                    iRealFaciNum += 1
 
     def funSelectParents(self, fp_listdictCurrPop, fp_iIndIndex=None):
         '''
