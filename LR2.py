@@ -1,4 +1,5 @@
 import instanceGeneration
+import GA
 import numpy as np
 
 
@@ -134,7 +135,7 @@ class LagrangianRelaxation:
         fUpperBound = w1 + self.fAlpha * w2
         return fUpperBound
 
-    def funUpdateMultiplierLambda(self, fp_lowerBound_n):
+    def funUpdateMultiplierLambda(self, fp_aLocaSolXj, fp_lowerBound_n):
         '''
         Compute the (n+1)th iteration's multiplier, i.e., λ_{ir}.
         @fp_lowBound_n: The value of lower bound for the n-th iteration.
@@ -143,19 +144,18 @@ class LagrangianRelaxation:
         arrayOfSumYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         a2dLambda_nextIter = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # "aFaciIndex" stores indexes of selected facilities.
-        aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 sumYijr = 0
                 for r in range(self.iRealFaciNum):
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
                 arrayOfSumYijr[i][j] = sumYijr  # Stored and used for compute λ_(n+1)
-                denominatorOfStepSize += pow((sumYijr - aLocaSolXj[j]), 2)
+                denominatorOfStepSize += pow((sumYijr - fp_aLocaSolXj[j]), 2)
         i = j = r = 0
         stepSize = self.fBeta * ((self.fBestUpperBound - fp_lowerBound_n)) / denominatorOfStepSize
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
-                a2dLambda_nextIter[i][j] = self.a2dLambda[i][j] + stepSize * (arrayOfSumYijr[i][j] - aLocaSolXj[j])
+                a2dLambda_nextIter[i][j] = self.a2dLambda[i][j] + stepSize * (arrayOfSumYijr[i][j] - fp_aLocaSolXj[j])
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
                 if a2dLambda_nextIter[i][j] < 0:
                     a2dLambda_nextIter[i][j] = 0
@@ -187,6 +187,48 @@ class LagrangianRelaxation:
         else:
             return False
 
+    def funLR_main(self):
+        meetTerminationCondition = False
+        fLowerBound = 0
+        fUpperBound = 0
+        n = 0  # Iteration number
+        nonImproveIterNum = 0
+        UBupdateNum = 0
+        LBupdateNum = 0
+        while meetTerminationCondition is False:
+            aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
+            fUpperBound = self.funUpperBound(aLocaSolXj)
+            if fLowerBound > fUpperBound:
+                print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
+            if fUpperBound < self.fBestUpperBound:
+                self.fBestUpperBound = fUpperBound
+                self.aLocaSolXj = aLocaSolXj
+                UBupdateNum += 1
+                if fUpperBound < self.fBestLowerBoundZLambda or (fUpperBound > self.fBestLowerBoundZLambda and fLowerBound > self.fBestLowerBoundZLambda):
+                    self.fBestLowerBoundZLambda = fLowerBound
+                    LBupdateNum += 1
+            elif fLowerBound < self.fBestUpperBound and fLowerBound > self.fBestLowerBoundZLambda:
+                self.fBestLowerBoundZLambda = fLowerBound
+                LBupdateNum += 1
+            else:
+                nonImproveIterNum += 1
+                if (nonImproveIterNum % 30) == 0:
+                    self.fBeta /= 2
+                    nonImproveIterNum = 0
+            if self.feasible is True:
+                print("Feasible solution found.")
+                break
+            self.a2dLambda = self.funUpdateMultiplierLambda(aLocaSolXj, fLowerBound)
+            meetTerminationCondition = self.funMeetTerminationCondition(fLowerBound, n)
+            n += 1
+        print("n: ", n)
+        print("UB update number: ", UBupdateNum)
+        print("LB update number: ", LBupdateNum)
+        print("Xj: ", LR.aLocaSolXj)
+        print("Upper bound: ", LR.fBestUpperBound)
+        print("Lower bound: ", LR.fBestLowerBoundZLambda)
+        print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestUpperBound)
+
 
 if __name__ == '__main__':
     '''
@@ -194,19 +236,27 @@ if __name__ == '__main__':
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
-    listParameters = [600, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listLRParameters = [600, 2.0, 1e-8, 1.0, 0.001]
+    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # Lagrangian relaxation
+    LR = LagrangianRelaxation(listLRParameters, obInstance)
+    LR.funInitMultiplierLambda()
+    LR.funLR_main()
+    # genetic algorithm
+    # listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
+    # geneticAlgo = GA.GA(listGAParameters, obInstance)
+    # finalPop = geneticAlgo.funGA_main()
+    # print(finalPop[0]['chromosome'])
+    # print(1/finalPop[0]['fitness'])
+    '''
     meetTerminationCondition = False
     fLowerBound = 0
     fUpperBound = 0
     n = 0  # Iteration number
     nonImproveIterNum = 0
-    LR = LagrangianRelaxation(listParameters, obInstance)
-    LR.funInitMultiplierLambda()
     UBupdateNum = 0
     LBupdateNum = 0
     while meetTerminationCondition is False:
@@ -232,7 +282,7 @@ if __name__ == '__main__':
         if LR.feasible is True:
             print("Feasible solution found.")
             break
-        LR.a2dLambda = LR.funUpdateMultiplierLambda(fLowerBound)
+        LR.a2dLambda = LR.funUpdateMultiplierLambda(aLocaSolXj, fLowerBound)
         meetTerminationCondition = LR.funMeetTerminationCondition(fLowerBound, n)
         n += 1
     print("n: ", n)
@@ -242,4 +292,5 @@ if __name__ == '__main__':
     print("Upper bound: ", LR.fBestUpperBound)
     print("Lower bound: ", LR.fBestLowerBoundZLambda)
     print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestUpperBound)
+    '''
     print()
