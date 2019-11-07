@@ -145,7 +145,7 @@ class LagrangianRelaxation:
         # "aFaciIndex" stores indexes of selected facilities.
         aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
         for i in range(self.iCandidateSitesNum):
-            for j in aFaciIndex:
+            for j in range(self.iCandidateSitesNum):
                 sumYijr = 0
                 for r in range(self.iRealFaciNum):
                     sumYijr += self.a3dAlloSolYijr[i][j][r]
@@ -159,7 +159,7 @@ class LagrangianRelaxation:
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
                 if a2dLambda_nextIter[i][j] < 0:
                     a2dLambda_nextIter[i][j] = 0
-                
+
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
@@ -175,7 +175,7 @@ class LagrangianRelaxation:
         @fp_lowerBound_n: The value of lower bound for the n-th iteration.
         @return: "True" represents the process should be terminated.
         '''
-        if ((self.fBestUpperBound - fp_lowerBound_n) / self.fBestUpperBound) < self.fToleranceEpsilon:
+        if fp_lowerBound_n < self.fBestUpperBound and ((self.fBestUpperBound - fp_lowerBound_n) / self.fBestUpperBound) < self.fToleranceEpsilon:
             print("1111111111111111111")
             return True
         elif fp_n > self.iMaxIterNum:
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
     listParameters = [600, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
@@ -218,8 +218,10 @@ if __name__ == '__main__':
             LR.fBestUpperBound = fUpperBound
             LR.aLocaSolXj = aLocaSolXj
             UBupdateNum += 1
-        # if fLowerBound > LR.fBestLowerBoundZLambda and fLowerBound < LR.fBestUpperBound:
-        # if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
+            if fUpperBound < LR.fBestLowerBoundZLambda or (fUpperBound > LR.fBestLowerBoundZLambda and fLowerBound > LR.fBestLowerBoundZLambda):
+                LR.fBestLowerBoundZLambda = fLowerBound
+                LBupdateNum += 1
+        elif fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
             LR.fBestLowerBoundZLambda = fLowerBound
             LBupdateNum += 1
         else:
@@ -239,5 +241,5 @@ if __name__ == '__main__':
     print("Xj: ", LR.aLocaSolXj)
     print("Upper bound: ", LR.fBestUpperBound)
     print("Lower bound: ", LR.fBestLowerBoundZLambda)
-    print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestLowerBoundZLambda)
+    print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestUpperBound)
     print()
