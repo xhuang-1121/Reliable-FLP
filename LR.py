@@ -1,5 +1,6 @@
 import instanceGeneration
 import numpy as np
+import copy
 
 
 class LagrangianRelaxation:
@@ -229,7 +230,7 @@ if __name__ == '__main__':
             print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
         if fUpperBound < LR.fBestUpperBound:
             LR.fBestUpperBound = fUpperBound
-            LR.aLocaSolXj = aLocaSolXj
+            LR.aLocaSolXj = copy.deepcopy(aLocaSolXj)
             UBupdateNum += 1
         # if fLowerBound > LR.fBestLowerBoundZLambda and fLowerBound < LR.fBestUpperBound:
         # if fLowerBound > 0 and fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:

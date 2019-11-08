@@ -11,6 +11,7 @@ class Individal:
     def __init__(self, iIndLen):
         self.aChromosome = np.zeros((iIndLen, ), dtype=np.int)
         self.fFitness = 0.0
+        self.objectValue = 0.0
         for i in range(iIndLen):
             if np.random.rand() <= 0.5:
                 self.aChromosome[i] = 1
@@ -44,7 +45,8 @@ class GA:
             ind = Individal(self.iIndLen)
             listdictInitPop.append({
                 'chromosome': ind.aChromosome,
-                'fitness': ind.fFitness
+                'fitness': ind.fFitness,
+                'objectValue': ind.objectValue
             })
         return listdictInitPop
 
@@ -88,8 +90,9 @@ class GA:
                     j] * pow(p, j) * (1 - p)
 
         # The larger, the better.
+        fObjectValue = w1 + self.fAlpha * w2
         fFitness = 1 / (w1 + self.fAlpha * w2)
-        return fFitness
+        return fFitness, fObjectValue
 
     def funEvaluatePop(self, fp_listdictPop):
         '''
@@ -101,7 +104,7 @@ class GA:
             if sum(fp_listdictPop[i]['chromosome']) < 2:
                 self.funModifyInd(fp_listdictPop[i]['chromosome'])
 
-            fp_listdictPop[i]['fitness'] = self.funEvaluateInd(
+            fp_listdictPop[i]['fitness'], fp_listdictPop[i]['objectValue'] = self.funEvaluateInd(
                 fp_listdictPop[i]['chromosome'])
         listdictPopAfEval = fp_listdictPop
         return listdictPopAfEval
@@ -261,7 +264,7 @@ if __name__ == '__main__':
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
+    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
     listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)

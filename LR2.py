@@ -1,6 +1,7 @@
 import instanceGeneration
 import GA
 import numpy as np
+import copy
 
 
 class LagrangianRelaxation:
@@ -70,12 +71,22 @@ class LagrangianRelaxation:
         j = 0
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
+        # 下面这段，j可以作为同一i的不同r
+        # for i in range(self.iCandidateSitesNum):
+        #     aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+        #     for j in range(1, self.iCandidateSitesNum):
+        #         aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+        #     iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
+        #     for r in range(self.iRealFaciNum):
+        #         a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
+        #         fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
+        # 下面这段，j只能作为同一i的某一个r
         for i in range(self.iCandidateSitesNum):
             aPsiIJ0 = np.array([a3dPsi[i][0][0]])
             for j in range(1, self.iCandidateSitesNum):
                 aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
             aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
-            for r in range(self.iRealFaciNum):
+            for r in range(2):
                 iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
                 a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
                 # Compute lower bound
@@ -200,14 +211,21 @@ class LagrangianRelaxation:
             fUpperBound = self.funUpperBound(aLocaSolXj)
             if fLowerBound > fUpperBound:
                 print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
+            # if fUpperBound < self.fBestUpperBound:
+            #     self.fBestUpperBound = fUpperBound
+            #     self.aLocaSolXj = aLocaSolXj
+            #     UBupdateNum += 1
+            #     if fUpperBound < self.fBestLowerBoundZLambda or (fUpperBound > self.fBestLowerBoundZLambda and fLowerBound > self.fBestLowerBoundZLambda):
+            #         self.fBestLowerBoundZLambda = fLowerBound
+            #         LBupdateNum += 1
+            # elif fLowerBound < self.fBestUpperBound and fLowerBound > self.fBestLowerBoundZLambda:
+            #     self.fBestLowerBoundZLambda = fLowerBound
+            #     LBupdateNum += 1
             if fUpperBound < self.fBestUpperBound:
                 self.fBestUpperBound = fUpperBound
-                self.aLocaSolXj = aLocaSolXj
+                self.aLocaSolXj = copy.deepcopy(aLocaSolXj)
                 UBupdateNum += 1
-                if fUpperBound < self.fBestLowerBoundZLambda or (fUpperBound > self.fBestLowerBoundZLambda and fLowerBound > self.fBestLowerBoundZLambda):
-                    self.fBestLowerBoundZLambda = fLowerBound
-                    LBupdateNum += 1
-            elif fLowerBound < self.fBestUpperBound and fLowerBound > self.fBestLowerBoundZLambda:
+            if fLowerBound > self.fBestLowerBoundZLambda:
                 self.fBestLowerBoundZLambda = fLowerBound
                 LBupdateNum += 1
             else:
@@ -215,9 +233,9 @@ class LagrangianRelaxation:
                 if (nonImproveIterNum % 30) == 0:
                     self.fBeta /= 2
                     nonImproveIterNum = 0
-            if self.feasible is True:
-                print("Feasible solution found.")
-                break
+            # if self.feasible is True:
+            #     print("Feasible solution found.")
+            #     break
             self.a2dLambda = self.funUpdateMultiplierLambda(aLocaSolXj, fLowerBound)
             meetTerminationCondition = self.funMeetTerminationCondition(fLowerBound, n)
             n += 1
@@ -236,7 +254,7 @@ if __name__ == '__main__':
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
-    listLRParameters = [600, 2.0, 1e-8, 1.0, 0.001]
+    listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
     listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
@@ -246,11 +264,12 @@ if __name__ == '__main__':
     LR.funInitMultiplierLambda()
     LR.funLR_main()
     # genetic algorithm
-    # listGAParameters = [10, 10, 10, 0.9, 0.1, 0.5]
-    # geneticAlgo = GA.GA(listGAParameters, obInstance)
-    # finalPop = geneticAlgo.funGA_main()
-    # print(finalPop[0]['chromosome'])
-    # print(1/finalPop[0]['fitness'])
+    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
+    geneticAlgo = GA.GA(listGAParameters, obInstance)
+    finalPop = geneticAlgo.funGA_main()
+    print(finalPop[0]['chromosome'])
+    print(1/finalPop[0]['fitness'])
+    print()
     '''
     meetTerminationCondition = False
     fLowerBound = 0
