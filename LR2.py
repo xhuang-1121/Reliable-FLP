@@ -64,33 +64,33 @@ class LagrangianRelaxation:
             else:
                 count += 1
         if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
-            aSortedPhi = sorted(aPhi)
+            aSortedPhi = sorted(aPhi)  # default increasing order
             aIndexJ = np.where(aPhi < aSortedPhi[2])[0]
             aLocaSolXj[aIndexJ[0]] = 1
             aLocaSolXj[aIndexJ[1]] = 1
         j = 0
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
-        # 下面这段，j可以作为同一i的不同r
-        # for i in range(self.iCandidateSitesNum):
-        #     aPsiIJ0 = np.array([a3dPsi[i][0][0]])
-        #     for j in range(1, self.iCandidateSitesNum):
-        #         aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-        #     iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
-        #     for r in range(self.iRealFaciNum):
-        #         a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
-        #         fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
-        # 下面这段，j只能作为同一i的某一个r
+        # 下面这段，j可以作为同一i的不同r, 下届会更松
         for i in range(self.iCandidateSitesNum):
             aPsiIJ0 = np.array([a3dPsi[i][0][0]])
             for j in range(1, self.iCandidateSitesNum):
                 aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
+            iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
             for r in range(2):
-                iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
-                a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
-                # Compute lower bound
-                fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
+                a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
+                fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
+        # 下面这段，j只能作为同一i的某一个r
+        # for i in range(self.iCandidateSitesNum):
+        #     aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+        #     for j in range(1, self.iCandidateSitesNum):
+        #         aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+        #     aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
+        #     for r in range(2):
+        #         iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
+        #         a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
+        #         # Compute lower bound
+        #         fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
 
         # Compute lower bound
         fLowerBound += np.dot(aPhi, aLocaSolXj)
@@ -138,7 +138,8 @@ class LagrangianRelaxation:
             aSortedTransCostForI = sorted(aSelcSitesTransCostForI)  # ascending order
 
             # j represents the facilities that allocated to the customer i
-            for j in range(iSelcSitesNum):
+            # for j in range(iSelcSitesNum):  # 把所有Xj=1的点都分给i
+            for j in range(2):  # 每个i只有两个级别的供应点
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
@@ -170,7 +171,7 @@ class LagrangianRelaxation:
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
                 if a2dLambda_nextIter[i][j] < 0:
                     a2dLambda_nextIter[i][j] = 0
-
+        print((a2dLambda_nextIter == self.a2dLambda).all())
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
@@ -255,7 +256,7 @@ if __name__ == '__main__':
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
     '''
     listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
@@ -264,7 +265,7 @@ if __name__ == '__main__':
     LR.funInitMultiplierLambda()
     LR.funLR_main()
     # genetic algorithm
-    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
+    listGAParameters = [10, 10, 5, 0.9, 0.1, 1]
     geneticAlgo = GA.GA(listGAParameters, obInstance)
     finalPop = geneticAlgo.funGA_main()
     print(finalPop[0]['chromosome'])
