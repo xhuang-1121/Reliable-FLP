@@ -84,7 +84,8 @@ class GA:
             # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
             # j represents the facilities that allocated to the customer i
-            for j in range(len(aSortedTransCostForI)):
+            # for j in range(len(aSortedTransCostForI)): # 把所有Xj=1的点都分给i
+            for j in range(2):  # 每个i只有两个级别的供应点
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
