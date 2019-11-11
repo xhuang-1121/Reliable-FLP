@@ -1,5 +1,6 @@
 import instanceGeneration
 import GA
+import usecplex
 import numpy as np
 import copy
 
@@ -171,7 +172,7 @@ class LagrangianRelaxation:
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
                 if a2dLambda_nextIter[i][j] < 0:
                     a2dLambda_nextIter[i][j] = 0
-        print((a2dLambda_nextIter == self.a2dLambda).all())
+        # print((a2dLambda_nextIter == self.a2dLambda).all())
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
@@ -251,12 +252,16 @@ class LagrangianRelaxation:
 
 if __name__ == '__main__':
     '''
-    listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
+    @listLRParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
 
-    listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
+    @listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
+
+    @fp_listCplexParameters: [0:iCandidateFaciNum, 1:fAlpha]
+
+    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
     '''
     listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
@@ -264,53 +269,18 @@ if __name__ == '__main__':
     LR = LagrangianRelaxation(listLRParameters, obInstance)
     LR.funInitMultiplierLambda()
     LR.funLR_main()
+    print("-------------------------------------------------------------")
     # genetic algorithm
-    listGAParameters = [10, 10, 5, 0.9, 0.1, 1]
+    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
     geneticAlgo = GA.GA(listGAParameters, obInstance)
     finalPop = geneticAlgo.funGA_main()
     print(finalPop[0]['chromosome'])
     print(1/finalPop[0]['fitness'])
-    print()
-    '''
-    meetTerminationCondition = False
-    fLowerBound = 0
-    fUpperBound = 0
-    n = 0  # Iteration number
-    nonImproveIterNum = 0
-    UBupdateNum = 0
-    LBupdateNum = 0
-    while meetTerminationCondition is False:
-        aLocaSolXj, LR.a3dAlloSolYijr, LR.feasible, fLowerBound = LR.funSolveRelaxationProblem()
-        fUpperBound = LR.funUpperBound(aLocaSolXj)
-        if fLowerBound > fUpperBound:
-            print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
-        if fUpperBound < LR.fBestUpperBound:
-            LR.fBestUpperBound = fUpperBound
-            LR.aLocaSolXj = aLocaSolXj
-            UBupdateNum += 1
-            if fUpperBound < LR.fBestLowerBoundZLambda or (fUpperBound > LR.fBestLowerBoundZLambda and fLowerBound > LR.fBestLowerBoundZLambda):
-                LR.fBestLowerBoundZLambda = fLowerBound
-                LBupdateNum += 1
-        elif fLowerBound < LR.fBestUpperBound and fLowerBound > LR.fBestLowerBoundZLambda:
-            LR.fBestLowerBoundZLambda = fLowerBound
-            LBupdateNum += 1
-        else:
-            nonImproveIterNum += 1
-            if (nonImproveIterNum % 30) == 0:
-                LR.fBeta /= 2
-                nonImproveIterNum = 0
-        if LR.feasible is True:
-            print("Feasible solution found.")
-            break
-        LR.a2dLambda = LR.funUpdateMultiplierLambda(aLocaSolXj, fLowerBound)
-        meetTerminationCondition = LR.funMeetTerminationCondition(fLowerBound, n)
-        n += 1
-    print("n: ", n)
-    print("UB update number: ", UBupdateNum)
-    print("LB update number: ", LBupdateNum)
-    print("Xj: ", LR.aLocaSolXj)
-    print("Upper bound: ", LR.fBestUpperBound)
-    print("Lower bound: ", LR.fBestLowerBoundZLambda)
-    print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestUpperBound)
-    '''
-    print()
+    print("-------------------------------------------------------------")
+    # cplex
+    listCplexParameters = [10, 1]
+    cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
+    cplexSolver.fun_fillModel()
+    sol = cplexSolver.model.solve()
+    cplexSolver.model.print_information()
+    print(sol)
