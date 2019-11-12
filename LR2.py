@@ -284,3 +284,7 @@ if __name__ == '__main__':
     sol = cplexSolver.model.solve()
     cplexSolver.model.print_information()
     print(sol)
+    print("-------------------------------------------------------------")
+    cplexSolver.fun_fillCpoModel()
+    cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.001, TimeLimit=10)
+    print("Solution status: " + cpsol.get_solve_status())

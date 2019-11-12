@@ -64,9 +64,11 @@ class CPLEX:
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
                 for r in range(2):  # 只分配两个设施
-                    listTranCost.append(self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb))
-        for i in range(pow(self.iCandidateFaciNum, 2) * 2):
-            objFunction += listTranCost[i] * listDeciVarY[i]
+                    fTranCost = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb)
+                    listTranCost.append(fTranCost)
+                    objFunction += fTranCost * listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+        # for i in range(pow(self.iCandidateFaciNum, 2) * 2):
+        #     objFunction += listTranCost[i] * listDeciVarY[i]
         self.cpomodel.add(self.cpomodel.minimize(objFunction))
         # add constraints
         for i in range(self.iCandidateFaciNum):
@@ -95,16 +97,31 @@ if __name__ == '__main__':
 
     @fp_listCplexParameters: [0:iCandidateFaciNum, 1:fAlpha]
     '''
-    listInstPara = [30, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # cplex
-    listCplexParameters = [30, 1]
+    listCplexParameters = [5, 1]
     cplexSolver = CPLEX(listCplexParameters, obInstance)
-    # cplexSolver.fun_fillModel()
-    # sol = cplexSolver.model.solve()
+    # ------------------------docplex-mp module--------------------
+    cplexSolver.fun_fillModel()
+    cplexSolver.model.parameters.mip.tolerances.mipgap = 0.0001  # 控制gap/tolerance, 0.1即10%
+    sol = cplexSolver.model.solve()
+    print("Objective value: ", sol.get_objective_value())
+    print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if sol.get_value('X_'+str(i)) == 1:
+            print('X_'+str(i)+" =", 1)
+    # print(sol)  # 获取所有的变量解
+    # print('-------------------------------------------------------------------')
+    # -----------------------docplex-cp module---------------------
     cplexSolver.fun_fillCpoModel()
-    sol = cplexSolver.cpomodel.solve(TimeLimit=1)
-    print("Solution status: " + sol.get_solve_status())
-    # print(sol)
+    cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
+    print("Solution status: " + cpsol.get_solve_status())
+
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if cpsol.get_all_var_solutions()[i].get_value() == 1:
+            print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
+    # print(cpsol)
+    # print(type(sol))
