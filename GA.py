@@ -187,11 +187,13 @@ class GA:
                         aOffs2[j] = listdictParents[0]['chromosome'][j]
                 listdictPopAfCros.append({
                     'chromosome': aOffs1,
-                    'fitness': 0.0
+                    'fitness': 0.0,
+                    'objectValue': 0.0
                 })
                 listdictPopAfCros.append({
                     'chromosome': aOffs2,
-                    'fitness': 0.0
+                    'fitness': 0.0,
+                    'objectValue': 0.0
                 })
         # "listdictPopAfCros" has no relation to "fp_listdictCurrPop"
         return listdictPopAfCros
@@ -249,10 +251,12 @@ class GA:
         listdictFinalPop = listdictCurrPop
         # plot figure
         genNum = list(np.linspace(0, self.iGenNum, num=(self.iGenNum + 1)))
-        plt.figure()
-        plt.plot(genNum, listfBestIndFitness)
-        plt.savefig("line.jpg")
-        return listdictFinalPop
+        # plt.figure()
+        # plt.plot(genNum, listfBestIndFitness)
+        # plt.xlabel("# of Generation")
+        # plt.ylabel("Fitness Of Best Individual")
+        # plt.savefig("line.jpg")
+        return listdictFinalPop, genNum, listfBestIndFitness
 
 
 if __name__ == '__main__':

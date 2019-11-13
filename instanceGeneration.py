@@ -47,8 +47,8 @@ if __name__ == '__main__':
     listPara:
     0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
     '''
-    listPara = [30, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
-    f = open('30-nodeInstances', 'wb')
+    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    f = open('10-nodeInstances', 'wb')
     for i in range(10):
         generateInstances = Instances(listPara)
         generateInstances.funGenerateInstances()
