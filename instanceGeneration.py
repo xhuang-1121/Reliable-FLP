@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 
 
 class Instances:
@@ -46,10 +47,19 @@ if __name__ == '__main__':
     listPara:
     0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
     '''
-    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
-    generateInstances = Instances(listPara)
-    generateInstances.funGenerateInstances()
-    print("trans cost: \n", generateInstances.af_2d_TransCost)
-    print("fixed cost: \n", generateInstances.aiFixedCost)
-    print("coordinate: \n", generateInstances.a_2d_SitesCoordi)
-    print("demands: \n", generateInstances.aiDemands)
+    listPara = [30, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    f = open('30-nodeInstances', 'wb')
+    for i in range(10):
+        generateInstances = Instances(listPara)
+        generateInstances.funGenerateInstances()
+        pickle.dump(generateInstances, f)
+    f.close()
+    # f = open('30-nodeInstances', 'rb')
+    # ins1 = pickle.load(f)
+    # ins2 = pickle.load(f)
+    # print(ins1.aiFixedCost)
+    # print(ins2.aiFixedCost)
+    # print("trans cost: \n", generateInstances.af_2d_TransCost)
+    # print("fixed cost: \n", generateInstances.aiFixedCost)
+    # print("coordinate: \n", generateInstances.a_2d_SitesCoordi)
+    # print("demands: \n", generateInstances.aiDemands)

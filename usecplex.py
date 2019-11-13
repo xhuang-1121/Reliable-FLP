@@ -110,6 +110,7 @@ if __name__ == '__main__':
     sol = cplexSolver.model.solve()
     print("Objective value: ", sol.get_objective_value())
     print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    cplexSolver.model.print_information()
     for i in range(cplexSolver.iCandidateFaciNum):
         if sol.get_value('X_'+str(i)) == 1:
             print('X_'+str(i)+" =", 1)

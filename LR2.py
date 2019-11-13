@@ -261,7 +261,7 @@ if __name__ == '__main__':
     @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
     '''
     listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [10, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
@@ -271,20 +271,28 @@ if __name__ == '__main__':
     LR.funLR_main()
     print("-------------------------------------------------------------")
     # genetic algorithm
-    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
+    listGAParameters = [10, 10, 5, 0.9, 0.1, 1]
     geneticAlgo = GA.GA(listGAParameters, obInstance)
     finalPop = geneticAlgo.funGA_main()
     print(finalPop[0]['chromosome'])
     print(1/finalPop[0]['fitness'])
     print("-------------------------------------------------------------")
-    # cplex
-    listCplexParameters = [10, 1]
+    # cplex-mp module
+    listCplexParameters = [5, 1]
     cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
     cplexSolver.fun_fillModel()
     sol = cplexSolver.model.solve()
     cplexSolver.model.print_information()
-    print(sol)
+    print("Objective value: ", sol.get_objective_value())
+    print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if sol.get_value('X_'+str(i)) == 1:
+            print('X_'+str(i)+" =", 1)
     print("-------------------------------------------------------------")
+    # cplex-cp module
     cplexSolver.fun_fillCpoModel()
     cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.001, TimeLimit=10)
     print("Solution status: " + cpsol.get_solve_status())
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if cpsol.get_all_var_solutions()[i].get_value() == 1:
+            print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
