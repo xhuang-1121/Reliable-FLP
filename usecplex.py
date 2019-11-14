@@ -14,7 +14,7 @@ class CPLEX:
         self.model = Model()
         self.cpomodel = CpoModel()
 
-    def fun_fillModel(self):
+    def fun_fillMpModel(self):
         # creat decision variables list
         listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
         listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
@@ -105,8 +105,10 @@ if __name__ == '__main__':
     listCplexParameters = [5, 1]
     cplexSolver = CPLEX(listCplexParameters, obInstance)
     # ------------------------docplex-mp module--------------------
-    cplexSolver.fun_fillModel()
+    cplexSolver.fun_fillMpModel()
     cplexSolver.model.parameters.mip.tolerances.mipgap = 0.0001  # 控制gap/tolerance, 0.1即10%
+    # cplexSolver.model.set_time_limit(0.01)  # 控制时间
+    print('Time limit for mp: ', cplexSolver.model.get_time_limit())
     sol = cplexSolver.model.solve()
     print("Objective value: ", sol.get_objective_value())
     print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
@@ -115,7 +117,7 @@ if __name__ == '__main__':
         if sol.get_value('X_'+str(i)) == 1:
             print('X_'+str(i)+" =", 1)
     # print(sol)  # 获取所有的变量解
-    # print('-------------------------------------------------------------------')
+    print('-------------------------------------------------------------------')
     # -----------------------docplex-cp module---------------------
     cplexSolver.fun_fillCpoModel()
     cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)

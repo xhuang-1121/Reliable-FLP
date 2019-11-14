@@ -201,6 +201,46 @@ class LagrangianRelaxation:
         else:
             return False
 
+    def funLR_main(self):
+        meetTerminationCondition = False
+        fLowerBound = 0
+        fUpperBound = 0
+        n = 0  # Iteration number
+        nonImproveIterNum = 0
+        UBupdateNum = 0
+        LBupdateNum = 0
+        while meetTerminationCondition is False:
+            aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
+            fUpperBound = self.funUpperBound(aLocaSolXj)
+            if fLowerBound > fUpperBound:
+                print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
+            if fUpperBound < self.fBestUpperBound:
+                self.fBestUpperBound = fUpperBound
+                self.aLocaSolXj = copy.deepcopy(aLocaSolXj)
+                UBupdateNum += 1
+            if fLowerBound > self.fBestLowerBoundZLambda:
+                self.fBestLowerBoundZLambda = fLowerBound
+                LBupdateNum += 1
+            else:
+                nonImproveIterNum += 1
+                if (nonImproveIterNum % 30) == 0:
+                    self.fBeta /= 2
+                    nonImproveIterNum = 0
+            # if self.feasible is True:
+            #     print("Feasible solution found.")
+            #     break
+            self.a2dLambda = self.funUpdateMultiplierLambda(fLowerBound)
+            meetTerminationCondition = self.funMeetTerminationCondition(fLowerBound, n)
+            n += 1
+        print("n: ", n)
+        print("UB update number: ", UBupdateNum)
+        print("LB update number: ", LBupdateNum)
+        print("Xj: ", self.aLocaSolXj)
+        print("Upper bound: ", self.fBestUpperBound)
+        print("Lower bound: ", self.fBestLowerBoundZLambda)
+        print("Gap: ", (self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestUpperBound)
+        return self.fBestUpperBound, self.fBestLowerBoundZLambda
+
 
 if __name__ == '__main__':
     '''

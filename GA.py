@@ -5,6 +5,7 @@ import copy
 import instanceGeneration
 import matplotlib.pyplot as plt
 import heapq
+import time
 
 
 class Individal:
@@ -269,12 +270,23 @@ if __name__ == '__main__':
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    listGAParameters = [10, 10, 10, 0.9, 0.1, 1]
-    listInstPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    iGenNum = 60
+    iPopSize = 30
+    iCandidateFaciNum = 50
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1]
+    listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    start = time.time()
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # genetic algorithm
     geneticAlgo = GA(listGAParameters, obInstance)
-    finalPop = geneticAlgo.funGA_main()
-    print(finalPop)
+    finalPop, listGenNum, listfBestIndFitness = geneticAlgo.funGA_main()
+    end = time.time()
+    plt.figure()
+    plt.plot(listGenNum, listfBestIndFitness)
+    plt.xlabel("# of Generation")
+    plt.ylabel("Fitness Of Best Individual")
+    plt.show()
+    # plt.savefig("line.jpg")
+    print(end - start)

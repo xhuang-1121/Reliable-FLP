@@ -47,9 +47,11 @@ if __name__ == '__main__':
     listPara:
     0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
     '''
-    listPara = [10, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
-    f = open('10-nodeInstances', 'wb')
-    for i in range(10):
+    iInsNum = 10
+    iSitesNum = 50
+    listPara = [iSitesNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
+    f = open('50-nodeInstances', 'wb')
+    for i in range(iInsNum):
         generateInstances = Instances(listPara)
         generateInstances.funGenerateInstances()
         pickle.dump(generateInstances, f)

@@ -3,6 +3,7 @@ import GA
 import usecplex
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
 
 
 class LagrangianRelaxation:
@@ -66,7 +67,7 @@ class LagrangianRelaxation:
                 count += 1
         if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
             aSortedPhi = sorted(aPhi)  # default increasing order
-            aIndexJ = np.where(aPhi < aSortedPhi[2])[0]
+            aIndexJ = np.where(aPhi <= aSortedPhi[2])[0]
             aLocaSolXj[aIndexJ[0]] = 1
             aLocaSolXj[aIndexJ[1]] = 1
         j = 0
@@ -244,10 +245,11 @@ class LagrangianRelaxation:
         print("n: ", n)
         print("UB update number: ", UBupdateNum)
         print("LB update number: ", LBupdateNum)
-        print("Xj: ", LR.aLocaSolXj)
-        print("Upper bound: ", LR.fBestUpperBound)
-        print("Lower bound: ", LR.fBestLowerBoundZLambda)
-        print("Gap: ", (LR.fBestUpperBound - LR.fBestLowerBoundZLambda) / LR.fBestUpperBound)
+        print("Xj: ", self.aLocaSolXj)
+        print("Upper bound: ", self.fBestUpperBound)
+        print("Lower bound: ", self.fBestLowerBoundZLambda)
+        print("Gap: ", (self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestUpperBound)
+        return self.fBestUpperBound, self.fBestLowerBoundZLambda
 
 
 if __name__ == '__main__':
@@ -260,39 +262,51 @@ if __name__ == '__main__':
 
     @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
     '''
+    iCandidateFaciNum = 50
     listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
-    listInstPara = [5, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
+    listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # Lagrangian relaxation
-    LR = LagrangianRelaxation(listLRParameters, obInstance)
-    LR.funInitMultiplierLambda()
-    LR.funLR_main()
-    print("-------------------------------------------------------------")
-    # genetic algorithm
-    listGAParameters = [10, 10, 5, 0.9, 0.1, 1]
-    geneticAlgo = GA.GA(listGAParameters, obInstance)
-    finalPop = geneticAlgo.funGA_main()
-    print(finalPop[0]['chromosome'])
-    print(1/finalPop[0]['fitness'])
+    # LR = LagrangianRelaxation(listLRParameters, obInstance)
+    # LR.funInitMultiplierLambda()
+    # LR.funLR_main()
     print("-------------------------------------------------------------")
     # cplex-mp module
-    listCplexParameters = [5, 1]
+    listCplexParameters = [iCandidateFaciNum, 1]
     cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
-    cplexSolver.fun_fillModel()
+    cplexSolver.fun_fillMpModel()
     sol = cplexSolver.model.solve()
     cplexSolver.model.print_information()
-    print("Objective value: ", sol.get_objective_value())
+    optimialValue = sol.get_objective_value()
+    print("Objective value: ", optimialValue)
     print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
     for i in range(cplexSolver.iCandidateFaciNum):
         if sol.get_value('X_'+str(i)) == 1:
             print('X_'+str(i)+" =", 1)
     print("-------------------------------------------------------------")
+    # genetic algorithm
+    iGenNum = 100
+    iPopSize = 200
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1]
+    for i in range(5):
+        geneticAlgo = GA.GA(listGAParameters, obInstance)
+        finalPop, listGenNum, listfBestIndFitness = geneticAlgo.funGA_main()
+        plt.figure()
+        plt.plot(listGenNum, listfBestIndFitness)
+        plt.xlabel("# of Generation")
+        plt.ylabel("Fitness Of Best Individual")
+        plt.show()
+        # print(finalPop[0]['chromosome'])
+        print(1/finalPop[0]['fitness'])
+        print((finalPop[0]['objectValue'] - optimialValue)/finalPop[0]['objectValue'])
+        print("-------------------------------------------------------------")
+
     # cplex-cp module
-    cplexSolver.fun_fillCpoModel()
-    cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.001, TimeLimit=10)
-    print("Solution status: " + cpsol.get_solve_status())
-    for i in range(cplexSolver.iCandidateFaciNum):
-        if cpsol.get_all_var_solutions()[i].get_value() == 1:
-            print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
+    # cplexSolver.fun_fillCpoModel()
+    # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.001, TimeLimit=10)
+    # print("Solution status: " + cpsol.get_solve_status())
+    # for i in range(cplexSolver.iCandidateFaciNum):
+    #     if cpsol.get_all_var_solutions()[i].get_value() == 1:
+    #         print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
