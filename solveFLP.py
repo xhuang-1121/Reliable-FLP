@@ -33,7 +33,6 @@ def funGA():
     listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
-    listiOptimalNumEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\10-nodeInsExperData.txt', 'a')
     plt.figure()
