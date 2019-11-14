@@ -6,6 +6,18 @@ from instanceGeneration import Instances
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 import time
+import xlwt
+
+
+def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
+    rowNum = a_2d_fEveInsEveRunObjValue.shape[0]
+    columnNum = a_2d_fEveInsEveRunObjValue.shape[1]
+    workbook = xlwt.Workbook()  # 新建一个工作簿
+    sheet = workbook.add_sheet('sheet1')
+    for i in range(rowNum):
+        for j in range(columnNum):
+            sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
+    workbook.save(excelName)
 
 
 def funGA():
@@ -23,7 +35,7 @@ def funGA():
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     listiOptimalNumEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
-    textFile = open('E:\VSCodeSpace\PythonWorkspace\GAforFLP\\10-nodeInstances.txt', 'a')
+    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\10-nodeInsExperData.txt', 'a')
     plt.figure()
 
     f = open('10-nodeInstances', 'rb')
@@ -61,15 +73,18 @@ def funGA():
 
     plt.xlabel("# of Generation")
     plt.ylabel("Fitness Of Best Individual (× 1e-3)")
+    plt.title("Convergence Curves (10-node, r=2)")
     plt.savefig("10-node")
     # 将数据写入text文件
-    textFile.write('Average CPU time of 10 runs for each instance:\n')
+    textFile.write('\nAverage CPU time of 10 runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))
     textFile.write('\n\nAverage fitness of 10 runs for each instance:\n')
     textFile.write(str(listfAveFitnessEveryIns))
     textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
-    np.savetxt("E:\VSCodeSpace\PythonWorkspace\GAforFLP\\10-nodeObjValueEveInsEveRun.txt", a_2d_fEveInsEveRunObjValue)
+    np.savetxt("E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\10-nodeObjValueEveInsEveRun.txt", a_2d_fEveInsEveRunObjValue)
+    excelName = '10-nodeObjValueEveInsEveRun.xls'
+    funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 
 funGA()
