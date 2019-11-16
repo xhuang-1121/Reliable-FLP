@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import instanceGeneration
 import numpy as np
 import copy

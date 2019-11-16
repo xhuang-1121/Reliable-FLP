@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from __future__ import print_function, division
 from operator import itemgetter
 import numpy as np
