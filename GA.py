@@ -252,13 +252,13 @@ class GA:
             listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
         listdictFinalPop = listdictCurrPop
         # plot figure
-        genNum = list(np.linspace(0, self.iGenNum, num=(self.iGenNum + 1)))
+        listGenIndex = list(np.linspace(0, self.iGenNum, num=(self.iGenNum + 1)))
         # plt.figure()
         # plt.plot(genNum, listfBestIndFitness)
         # plt.xlabel("# of Generation")
         # plt.ylabel("Fitness Of Best Individual")
         # plt.savefig("line.jpg")
-        return listdictFinalPop, genNum, listfBestIndFitness
+        return listdictFinalPop, listGenIndex, listfBestIndFitness
 
 
 if __name__ == '__main__':
