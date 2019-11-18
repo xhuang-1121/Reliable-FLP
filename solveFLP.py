@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 import numpy as np
-from multiprocessing import Pool 
+from multiprocessing import Pool
 import itertools
 import GA
 import usecplex
