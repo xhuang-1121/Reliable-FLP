@@ -23,7 +23,7 @@ class GA:
     def __init__(self, listGAParameters, fp_obInstance):
         '''
         Initialize parameters of GA, import instance
-        @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+        @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
         '''
         self.iGenNum = listGAParameters[0]
         self.iPopSize = listGAParameters[1]
@@ -31,6 +31,7 @@ class GA:
         self.fCrosRate = listGAParameters[3]
         self.fMutRate = listGAParameters[4]
         self.fAlpha = listGAParameters[5]
+        self.boolAllo2Faci = listGAParameters[6]
         self.obInstance = fp_obInstance
         if self.obInstance.iSitesNum != self.iIndLen:
             print(
@@ -86,8 +87,11 @@ class GA:
             # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
             # j represents the facilities that allocated to the customer i
-            # for j in range(len(aSortedTransCostForI)): # 把所有Xj=1的点都分给i
-            for j in range(2):  # 每个i只有两个级别的供应点
+            if self.boolAllo2Faci is True:
+                iAlloFaciNum = 2  # 每个i只有两个级别的供应点
+            else:
+                iAlloFaciNum = len(aSortedTransCostForI)  # 把所有Xj=1的点都分给i
+            for j in range(iAlloFaciNum):
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
@@ -265,7 +269,7 @@ if __name__ == '__main__':
     '''
     Test the genetic algorithm.
 
-    listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+    listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 
     listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
 
@@ -274,7 +278,11 @@ if __name__ == '__main__':
     iGenNum = 60
     iPopSize = 30
     iCandidateFaciNum = 50
-    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1]
+    fCrosRate = 0.9
+    fMutRate = 0.1
+    fAlpha = 1
+    boolAllo2Faci = True
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     start = time.time()
     # generate instance
