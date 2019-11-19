@@ -21,7 +21,7 @@ iCandidateFaciNum = 10
 insName = '10-nodeInstances'
 
 '''
-@listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+@listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
 iGenNum = 10
 iPopSize = 10
@@ -44,13 +44,9 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
 
 def funGA():
     '''
-    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
     '''
-    iGenNum = 150
-    iPopSize = 200
-    fCrosRate = 0.9
-    fMutRate = 0.1
-    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha]
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
     listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
@@ -112,7 +108,7 @@ def funGA():
 
 def funGA_ex():
     '''
-    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
     '''
     iGenNum = 150
     iPopSize = 200
@@ -120,7 +116,7 @@ def funGA_ex():
     fMutRate = 0.1
     iInsNum = 1
     iRunsNum = 1
-    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha]
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
     listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
@@ -192,7 +188,7 @@ def funGA_single(fp_tuple_combOfInsRuns):
 
 def funGA_parallel():
     '''
-    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+    @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
     '''
     listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()

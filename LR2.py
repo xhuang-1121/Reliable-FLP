@@ -290,7 +290,8 @@ if __name__ == '__main__':
     # genetic algorithm
     iGenNum = 100
     iPopSize = 200
-    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1]
+    boolAllo2Faci = True
+    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1, boolAllo2Faci]
     for i in range(5):
         geneticAlgo = GA.GA(listGAParameters, obInstance)
         finalPop, listGenNum, listfBestIndFitness = geneticAlgo.funGA_main()
