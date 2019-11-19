@@ -23,11 +23,12 @@ insName = '10-nodeInstances'
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
 '''
-iGenNum = 60
-iPopSize = 30
+iGenNum = 10
+iPopSize = 10
 fCrosRate = 0.9
 fMutRate = 0.1
-listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha]
+boolAllo2Faci = True
+listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
 
 
 def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
