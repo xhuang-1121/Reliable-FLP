@@ -4,5 +4,6 @@
     "python.linting.flake8Args": [
         "--max-line-length=248"
     ],
-    "python.formatting.provider": "yapf"
+    "python.formatting.provider": "yapf",
+    "editor.suggest.snippetsPreventQuickSuggestions": false
 }
