@@ -14,7 +14,7 @@ import LR1
 import LR2
 
 # Global variables
-iInsNum = 2
+iInsNum = 10
 iRunsNum = 10
 fAlpha = 1.0
 iCandidateFaciNum = 500
