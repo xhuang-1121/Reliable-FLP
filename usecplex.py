@@ -255,7 +255,7 @@ if __name__ == '__main__':
     # ------------------------docplex-mp module, m=sumXj--------------------
     cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
     cplexSolver.model.parameters.mip.tolerances.mipgap = 0.0001  # 控制gap/tolerance, 0.1即10%
-    # cplexSolver.model.set_time_limit(0.01)  # 控制时间
+    cplexSolver.model.set_time_limit(0.01)  # 控制时间
     print('Time limit for mp: ', cplexSolver.model.get_time_limit())
     sol = cplexSolver.model.solve()
     print("Objective value: ", sol.get_objective_value())

@@ -321,6 +321,59 @@ def funCplex_mp_parallel():
     textFile.write(str(listfCpuTimeEveIns))
 
 
+def funCplex_cp_single(fp_obInstance):
+    listCplexParameters = [iCandidateFaciNum, fAlpha]
+    print("Begin: cplex-cp")
+    print("Running......")
+    cpu_start = time.process_time()
+    cplexSolver = usecplex.CPLEX(listCplexParameters, fp_obInstance)
+    cplexSolver.fun_fillCpoModel()
+    cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
+    cpu_end = time.process_time()
+    cpuTime = cpu_end - cpu_start
+    fObjectiveValue = cpsol.get_objective_values()[0]
+    fGap = cpsol.get_objective_gaps()[0]
+    fBound = cpsol.get_objective_bounds()[0]
+    print("Solution status: " + cpsol.get_solve_status())
+    print("End: cplex-cp")
+    return cpuTime, fObjectiveValue, fGap, fBound
+
+
+def funCplex_cp_parallel():
+    afOptimalValueEveIns = np.zeros((iInsNum,))
+    listfCpuTimeEveIns = []
+    listfGapEveIns = []
+    listfBoundEveIns = []
+
+    f = open(insName, 'rb')
+    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\10-node_Cplex_cp_data(m=2).txt', 'a')
+    list_ins = []
+    for i in range(iInsNum):
+        ins = pickle.load(f)
+        list_ins.append(ins)
+    pool = Pool()
+    listtuple_expeResult = pool.map(funCplex_cp_single, list_ins)
+    pool.close()
+    pool.join()
+    if len(listtuple_expeResult) != iInsNum:
+        print("Wrong in funCplex_mp_parallel.")
+
+    for i in range(iInsNum):
+        listfCpuTimeEveIns.append(listtuple_expeResult[i][0])
+        afOptimalValueEveIns[i] = listtuple_expeResult[i][1]
+        listfGapEveIns.append(listtuple_expeResult[i][2])
+        listfBoundEveIns.append(listtuple_expeResult[i][3])
+
+    textFile.write('\nEvery instance\'s objective value got by Cplex-cp method:\n')
+    textFile.write(str(afOptimalValueEveIns))
+    textFile.write('\n\nEvery instance\'s CPU time used by Cplex-cp method:\n')
+    textFile.write(str(listfCpuTimeEveIns))
+    textFile.write('\n\nEvery instance\'s Gap used by Cplex-cp method:\n')
+    textFile.write(str(listfGapEveIns))
+    textFile.write('\n\nEvery instance\'s Bound used by Cplex-cp method:\n')
+    textFile.write(str(listfBoundEveIns))
+
+
 def funCplex_cp():
     listCplexParameters = [iCandidateFaciNum, fAlpha]
     f = open(insName, 'rb')
@@ -334,7 +387,7 @@ def funCplex_cp():
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
         cplexSolver.fun_fillCpoModel()
-        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100)
+        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
@@ -352,6 +405,8 @@ def funCplex_cp_ex():
     f = open(insName, 'rb')
     afOptimalValueEveIns = np.zeros((iInsNum,))
     listfCpuTimeEveIns = []
+    listfGapEveIns = []
+    listfBoundEveIns = []
     for i in range(iInsNum):
         print("Begin: Ins " + str(i))
         print("Running......")
@@ -359,13 +414,17 @@ def funCplex_cp_ex():
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
         cplexSolver.fun_fillCpoModel()
-        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100)
+        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
+        listfGapEveIns.append(cpsol.get_objective_gaps()[0])
+        listfBoundEveIns.append(cpsol.get_objective_bounds()[0])
         print("Solution status: " + cpsol.get_solve_status())
         print("End: Ins " + str(i) + "\n")
         print("CPU Time:", cpu_end - cpu_start)
+        print("Gap:", listfGapEveIns[i])
+        print("Bound:", listfBoundEveIns[i])
 
 
 def funLR2():
@@ -425,4 +484,6 @@ def funLR1():
 # funCplex_cp_ex()
 if __name__ == '__main__':
     # funGA_parallel()
-    funCplex_mp_parallel()
+    # funCplex_mp_parallel()
+    funCplex_cp_parallel()
+    # funCplex_cp_ex()
