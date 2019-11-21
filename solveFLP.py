@@ -268,8 +268,8 @@ def funGA_parallel_4ins():
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool()
     list_iRunsIndex = [i for i in range(iRunsNum)]
-    plotFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\ex10-node_GA_poltData(m=2).txt', 'a')
-    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\ex10-node_GA_EveInsData(m=2).txt', 'a')
+    plotFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\10-node_GA_poltData(m=2).txt', 'a')
+    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\10-node_GA_EveInsData(m=2).txt', 'a')
     f = open(insName, 'rb')
     list_ins = []
     for i in range(iInsNum):
@@ -313,8 +313,8 @@ def funGA_parallel_4ins():
 
     plt.xlabel("# of Generation")
     plt.ylabel("Fitness Of Best Individual (× 1e-3)")
-    plt.title("exConvergence Curves (10-node, m=2)")
-    plt.savefig("ex10-node_GA_ConvergenceCurve(m=2)")
+    plt.title("Convergence Curves (10-node, m=2)")
+    plt.savefig("10-node_GA_ConvergenceCurve(m=2)")
     # 将数据写入text文件
     textFile.write('\nAverage CPU time of 10 runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))
@@ -322,8 +322,8 @@ def funGA_parallel_4ins():
     textFile.write(str(listfAveFitnessEveryIns))
     textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
-    np.savetxt("E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\ex10-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
-    excelName = 'ex10-node_GA_ObjValueEveInsEveRun(m=2).xls'
+    np.savetxt("E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\10-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
+    excelName = '10-node_GA_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 
