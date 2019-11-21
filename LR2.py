@@ -288,8 +288,8 @@ if __name__ == '__main__':
             print('X_'+str(i)+" =", 1)
     print("-------------------------------------------------------------")
     # genetic algorithm
-    iGenNum = 100
-    iPopSize = 200
+    iGenNum = 10
+    iPopSize = 10
     boolAllo2Faci = True
     listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1, boolAllo2Faci]
     for i in range(5):
