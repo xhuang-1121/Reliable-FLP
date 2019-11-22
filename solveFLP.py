@@ -276,7 +276,7 @@ def funGA_parallel_4ins():
         ins = pickle.load(f)
         list_ins.append(ins)
     # listtuple_combOfInsRuns = list(itertools.product(list_ins[:4], list_iRunsIndex))  # int(iInsNum/2) == 4, 前4个instances
-    listtuple_combOfInsRuns = list(itertools.product(list_ins[4:], list_iRunsIndex)) # 后4个instances
+    listtuple_combOfInsRuns = list(itertools.product(list_ins[4:], list_iRunsIndex))  # 后4个instances
     listtuple_expeResult = pool.map(funGA_single, listtuple_combOfInsRuns)
     pool.close()
     pool.join()
