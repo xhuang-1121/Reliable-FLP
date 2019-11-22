@@ -270,40 +270,40 @@ if __name__ == '__main__':
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # Lagrangian relaxation
-    # LR = LagrangianRelaxation(listLRParameters, obInstance)
-    # LR.funInitMultiplierLambda()
-    # LR.funLR_main()
+    LR = LagrangianRelaxation(listLRParameters, obInstance)
+    LR.funInitMultiplierLambda()
+    LR.funLR_main()
     print("-------------------------------------------------------------")
-    # cplex-mp module
-    listCplexParameters = [iCandidateFaciNum, 1]
-    cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
-    cplexSolver.fun_fillMpModel()
-    sol = cplexSolver.model.solve()
-    cplexSolver.model.print_information()
-    optimialValue = sol.get_objective_value()
-    print("Objective value: ", optimialValue)
-    print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
-    for i in range(cplexSolver.iCandidateFaciNum):
-        if sol.get_value('X_'+str(i)) == 1:
-            print('X_'+str(i)+" =", 1)
+    # # cplex-mp module
+    # listCplexParameters = [iCandidateFaciNum, 1]
+    # cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
+    # cplexSolver.fun_fillMpModel()
+    # sol = cplexSolver.model.solve()
+    # cplexSolver.model.print_information()
+    # optimialValue = sol.get_objective_value()
+    # print("Objective value: ", optimialValue)
+    # print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    # for i in range(cplexSolver.iCandidateFaciNum):
+    #     if sol.get_value('X_'+str(i)) == 1:
+    #         print('X_'+str(i)+" =", 1)
     print("-------------------------------------------------------------")
-    # genetic algorithm
-    iGenNum = 10
-    iPopSize = 10
-    boolAllo2Faci = True
-    listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1, boolAllo2Faci]
-    for i in range(5):
-        geneticAlgo = GA.GA(listGAParameters, obInstance)
-        finalPop, listGenNum, listfBestIndFitness = geneticAlgo.funGA_main()
-        plt.figure()
-        plt.plot(listGenNum, listfBestIndFitness)
-        plt.xlabel("# of Generation")
-        plt.ylabel("Fitness Of Best Individual")
-        plt.show()
-        # print(finalPop[0]['chromosome'])
-        print(1/finalPop[0]['fitness'])
-        print((finalPop[0]['objectValue'] - optimialValue)/finalPop[0]['objectValue'])
-        print("-------------------------------------------------------------")
+    # # genetic algorithm
+    # iGenNum = 10
+    # iPopSize = 10
+    # boolAllo2Faci = True
+    # listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, 0.9, 0.1, 1, boolAllo2Faci]
+    # for i in range(5):
+    #     geneticAlgo = GA.GA(listGAParameters, obInstance)
+    #     finalPop, listGenNum, listfBestIndFitness = geneticAlgo.funGA_main()
+    #     plt.figure()
+    #     plt.plot(listGenNum, listfBestIndFitness)
+    #     plt.xlabel("# of Generation")
+    #     plt.ylabel("Fitness Of Best Individual")
+    #     plt.show()
+    #     # print(finalPop[0]['chromosome'])
+    #     print(1/finalPop[0]['fitness'])
+    #     print((finalPop[0]['objectValue'] - optimialValue)/finalPop[0]['objectValue'])
+    #     print("-------------------------------------------------------------")
 
     # cplex-cp module
     # cplexSolver.fun_fillCpoModel()

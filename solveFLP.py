@@ -358,7 +358,8 @@ def funCplex_mp_single(fp_obInstance):
     print("Running......")
     cpu_start = time.process_time()
     cplexSolver = usecplex.CPLEX(listCplexParameters, fp_obInstance)
-    cplexSolver.fun_fillMpModel()
+    cplexSolver.fun_fillMpModel()  # m == 2
+    # cplexSolver.fun_fillMpModel__AlloAllSelcFaci()  # m == # of all selected nodes
     sol = cplexSolver.model.solve()
     cpu_end = time.process_time()
     cpuTime = cpu_end - cpu_start
@@ -502,7 +503,7 @@ def funCplex_cp_ex():
 
 
 def funLR2():
-    iMaxIterationNum = 60
+    iMaxIterationNum = 600
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
