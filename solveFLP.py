@@ -17,8 +17,8 @@ import LR2
 iInsNum = 10
 iRunsNum = 10
 fAlpha = 1.0
-iCandidateFaciNum = 10
-insName = '10-nodeInstances'
+iCandidateFaciNum = 30
+insName = '30-nodeInstances'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
@@ -462,7 +462,8 @@ def funCplex_cp():
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
         cplexSolver.fun_fillCpoModel()
-        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
+        cpsol = cplexSolver.cpomodel.solve()
+        # cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
@@ -489,7 +490,9 @@ def funCplex_cp_ex():
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
         cplexSolver.fun_fillCpoModel()
-        cpsol = cplexSolver.cpomodel.solve(TimeLimit=100, TimeMode='CPUTime')
+        cpsol = cplexSolver.cpomodel.solve()
+        # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.16)
+        # cpsol = cplexSolver.cpomodel.solve(TimeLimit=1870, TimeMode='CPUTime')
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
@@ -522,6 +525,43 @@ def funLR2():
         listfUBEveIns.append(upperBound)
         listfLBEveIns.append(lowerBound)
         print("End: Ins " + str(i) + "\n")
+    textFile.write("\nUpperbound for every instance:\n")
+    textFile.write(str(listfUBEveIns))
+    textFile.write("\n\nLowerbound for every instance:\n")
+    textFile.write(str(listfLBEveIns))
+
+
+def funLR2_single(fp_obInstance):
+    print("Begin: Ins ")
+    print("Running......")
+    iMaxIterationNum = 600
+    fBeta = 2.0
+    fBetaMin = 1e-8
+    fToleranceEpsilon = 0.0001
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon]
+    LagRela = LR2.LagrangianRelaxation(listLRParameters, fp_obInstance)
+    LagRela.funInitMultiplierLambda()
+    upperBound, lowerBound = LagRela.funLR_main()
+    print("End: Ins\n")
+    return upperBound, lowerBound
+
+
+def funLR2_parallel():
+    listfUBEveIns = []
+    listfLBEveIns = []
+    f = open(insName, 'rb')
+    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\100-node_LR2(m=2).txt', 'a')
+    list_ins = []
+    for i in range(iInsNum):
+        ins = pickle.load(f)
+        list_ins.append(ins)
+    pool = Pool()
+    listtuple_expeResult = pool.map(funLR2_single, list_ins)
+    pool.close()
+    pool.join()
+    for i in range(iInsNum):
+        listfUBEveIns.append(listtuple_expeResult[i][0])
+        listfLBEveIns.append(listtuple_expeResult[i][1])
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
@@ -562,4 +602,5 @@ if __name__ == '__main__':
     # funCplex_mp_parallel()
     # funCplex_cp_parallel()
     # funCplex_cp_ex()
-    funGA_ex()
+    # funGA_ex()
+    funCplex_cp_ex()

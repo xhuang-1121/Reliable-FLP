@@ -104,7 +104,7 @@ class GA:
     def funEvaluatePop(self, fp_listdictPop):
         '''
         This method is used to evaluate the population.
-        @return: listdictPopAfEval
+        @return: listdictPopBefSurv
         '''
         for i in range(len(fp_listdictPop)):
             # make sure that at least 2 facilities are established to garantee reliability.
@@ -230,9 +230,31 @@ class GA:
         fp_listdictCurrPop.extend(fp_listdictPopAfMuta)
         # descending sort
         fp_listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
+        # 对前10个个体，构造邻域种群并进行评价
+        listdictNeighborPopAfEva = self.funLocalNeighborhood(fp_listdictCurrPop)
+        # 将当前种群与前10个个体的邻域种群合并
+        fp_listdictCurrPop.extend(listdictNeighborPopAfEva)
+        # 降序排列
+        fp_listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
         # only the first μ can survive
         fp_listdictCurrPop = fp_listdictCurrPop[:self.iPopSize]
         return fp_listdictCurrPop
+
+    def funLocalNeighborhood(self, fp_listdictCurrPop):
+        '''
+        Use local search to the best 10 individuals
+        '''
+        listdictNeighborPop = []
+        for i in range(10):  # Do local search process for the best 10 individuals
+            for j in range(self.iIndLen):
+                dictInd = copy.deepcopy(fp_listdictCurrPop[i])
+                dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
+                dictInd['fitness'] = 0
+                dictInd['objectValue'] = 0
+                listdictNeighborPop.append(dictInd)
+        # evaluate the listdictNeighborPop
+        listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
+        return listdictNeighborPopAfEva
 
     def funGA_main(self):
         '''
@@ -277,7 +299,7 @@ if __name__ == '__main__':
     '''
     iGenNum = 60
     iPopSize = 30
-    iCandidateFaciNum = 50
+    iCandidateFaciNum = 30
     fCrosRate = 0.9
     fMutRate = 0.1
     fAlpha = 1
@@ -292,10 +314,10 @@ if __name__ == '__main__':
     geneticAlgo = GA(listGAParameters, obInstance)
     listdictFinalPop, listGenNum, listfBestIndFitnessEveGen = geneticAlgo.funGA_main()
     end = time.time()
-    # plt.figure()
-    # plt.plot(listGenNum, listfBestIndFitnessEveGen)
-    # plt.xlabel("# of Generation")
-    # plt.ylabel("Fitness Of Best Individual")
-    # plt.show()
+    plt.figure()
+    plt.plot(listGenNum, listfBestIndFitnessEveGen)
+    plt.xlabel("# of Generation")
+    plt.ylabel("Fitness Of Best Individual")
+    plt.show()
     # plt.savefig("line.jpg")
     print("CPU Time:", end - start)
