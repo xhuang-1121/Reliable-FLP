@@ -510,7 +510,7 @@ def funLR2():
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
-    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon]
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2FaciNum]
     listfUBEveIns = []
     listfLBEveIns = []
     f = open(insName, 'rb')
@@ -538,7 +538,7 @@ def funLR2_single(fp_obInstance):
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
-    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon]
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci]
     LagRela = LR2.LagrangianRelaxation(listLRParameters, fp_obInstance)
     LagRela.funInitMultiplierLambda()
     upperBound, lowerBound = LagRela.funLR_main()

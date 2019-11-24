@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 class LagrangianRelaxation:
     def __init__(self, fp_listParameters, fp_obInstance):
         '''
-        @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
+        @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon, 5:boolAllo2Faci]
         '''
         self.iMaxIterNum = fp_listParameters[0]
         self.fBeta = fp_listParameters[1]
         self.fBetaMin = fp_listParameters[2]
         self.fAlpha = fp_listParameters[3]
         self.fToleranceEpsilon = fp_listParameters[4]  # Used in funTerminateCondition()
+        self.boolAllo2Faci = fp_listParameters[4]
         self.obInstance = fp_obInstance
 
         self.iCandidateSitesNum = self.obInstance.iSitesNum
@@ -47,9 +48,13 @@ class LagrangianRelaxation:
         # Phi, i.e., φ
         aPhi = np.zeros((self.iCandidateSitesNum,))
         # compute Psi
+        if self.boolAllo2Faci is True:
+            iAlloFaciNum = 2
+        else:
+            iAlloFaciNum = self.iCandidateSitesNum
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
-                for r in range(self.iCandidateSitesNum):
+                for r in range(iAlloFaciNum):
                     a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][r]
         i = j = r = 0
         # compute Phi
@@ -141,8 +146,13 @@ class LagrangianRelaxation:
             aSortedTransCostForI = sorted(aSelcSitesTransCostForI)  # ascending order
 
             # j represents the facilities that allocated to the customer i
+            if self.boolAllo2Faci is True:
+                iAlloFaciNum = 2
+            else:
+                iAlloFaciNum = iSelcSitesNum
             # for j in range(iSelcSitesNum):  # 把所有Xj=1的点都分给i
-            for j in range(2):  # 每个i只有两个级别的供应点
+            # for j in range(2):  # 每个i只有两个级别的供应点
+            for j in range(iAlloFaciNum):
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
@@ -263,8 +273,8 @@ if __name__ == '__main__':
 
     @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
     '''
-    iCandidateFaciNum = 50
-    listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001]
+    iCandidateFaciNum = 10
+    listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001, True]
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
