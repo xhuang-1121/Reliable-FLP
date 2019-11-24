@@ -1,24 +1,7 @@
 
 Every instance's objective value got by Cplex-mp method:
-[5315.49640611]
+[5336.90003819 5467.0559285  4821.4454514  5232.51925678 5292.65005282
+ 4527.57163836 5046.91899233 3902.18164935]
 
 Every instance's CPU time used by Cplex-mp method:
-[1310.443307955]
-
-Every instance's objective value got by Cplex-mp method-ins1:
-[5440.93519285]
-
-Every instance's CPU time used by Cplex-mp method-ins1:
-[1304.0577442190001]
-
-Every instance's objective value got by Cplex-mp method-ins2:
-[4795.55459619]
-
-Every instance's CPU time used by Cplex-mp method-ins2:
-[1446.881333753]
-
-Every instance's objective value got by Cplex-mp method-ins3-7:
-[5208.57943893 5269.68281147 4506.2155418  5019.53939894 3881.66498457]
-
-Every instance's CPU time used by Cplex-mp method-ins3-7:
-[1356.67043416, 941.3969607839999, 2024.9353691239999, 837.1007824110002, 1585.4259166269994]
+[854.1779765260001, 1252.1330840580001, 794.9475232550001, 872.2652603779998, 664.8223868459997, 935.8248210309998, 680.762253935, 809.5423098409997]

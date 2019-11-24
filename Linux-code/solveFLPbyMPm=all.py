@@ -19,6 +19,7 @@ iRunsNum = 10
 fAlpha = 1.0
 iCandidateFaciNum = 10
 insName = '10-nodeInstances'
+boolAllo2Faci = False
 
 def funCplex_mp_single(fp_obInstance):
     listCplexParameters = [iCandidateFaciNum, fAlpha]

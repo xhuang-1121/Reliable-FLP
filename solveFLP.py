@@ -3,6 +3,7 @@ import numpy as np
 from multiprocessing import Pool
 import itertools
 import GA
+import GAwithLocalSearch
 import usecplex
 import pickle
 import instanceGeneration
@@ -17,8 +18,8 @@ import LR2
 iInsNum = 10
 iRunsNum = 10
 fAlpha = 1.0
-iCandidateFaciNum = 30
-insName = '30-nodeInstances'
+iCandidateFaciNum = 10
+insName = '10-nodeInstances'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
@@ -27,7 +28,7 @@ iGenNum = 10
 iPopSize = 10
 fCrosRate = 0.9
 fMutRate = 0.1
-boolAllo2Faci = True
+boolAllo2Faci = False
 listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
 
 
@@ -114,7 +115,7 @@ def funGA_ex():
     iPopSize = 30
     fCrosRate = 0.9
     fMutRate = 0.1
-    iInsNum = 1
+    iInsNum = 10
     iRunsNum = 1
     boolAllo2Faci = False
     listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
@@ -125,9 +126,11 @@ def funGA_ex():
     # plt.figure()
 
     f = open(insName, 'rb')
-    for i in range(iInsNum):  # 10 instances
+    listIns = []
+    for i in range(10):  # 10 instances
         ins = pickle.load(f)
-        # print(ins.aiDemands)
+        listIns.append(ins)
+    for i in range(5, 6):
         # genetic algorithm
         listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 第0代也算上
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
@@ -135,9 +138,10 @@ def funGA_ex():
             print("Running......")
             cpuStart = time.process_time()
             # 调用GA求解
-            GeneticAlgo = GA.GA(listGAParameters, ins)
+            GeneticAlgo = GA.GA(listGAParameters, listIns[i])
             finalPop, listGenNum, listfBestIndFitness = GeneticAlgo.funGA_main()
             cpuEnd = time.process_time()
+            print('Sol:', finalPop[0]['chromosome'])
             # 记录CPU time，累加
             listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
             # 记录最终种群中最好个体的fitness和目标函数值，累加
@@ -339,7 +343,10 @@ def funCplex_mp():
         ins = pickle.load(f)
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
-        cplexSolver.fun_fillMpModel()
+        if boolAllo2Faci is True:
+            cplexSolver.fun_fillMpModel()
+        else:
+            cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
         sol = cplexSolver.model.solve()
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
@@ -352,14 +359,46 @@ def funCplex_mp():
     textFile.write(str(listfCpuTimeEveIns))
 
 
+def funCplex_mp_ex():
+    listCplexParameters = [iCandidateFaciNum, fAlpha]
+    f = open(insName, 'rb')
+    listIns = []
+    for i in range(iInsNum):
+        listIns.append(pickle.load(f))
+    afOptimalValueEveIns = np.zeros((iInsNum,))
+    listfCpuTimeEveIns = []
+    for i in range(5, 6):
+        print("Begin: Ins " + str(i))
+        print("Running......")
+        ins = listIns[i]
+        cpu_start = time.process_time()
+        cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
+        if boolAllo2Faci is True:
+            cplexSolver.fun_fillMpModel()
+        else:
+            cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
+        sol = cplexSolver.model.solve()
+        cpu_end = time.process_time()
+        listfCpuTimeEveIns.append(cpu_end - cpu_start)
+        afOptimalValueEveIns[i] = sol.get_objective_value()
+        # print(sol.solve_details)
+        for i in range(cplexSolver.iCandidateFaciNum):
+            if sol.get_value('X_'+str(i)) == 1:
+                print('X_'+str(i)+" =", 1)
+        print(sol.get_objective_value())
+        print("End: Ins " + str(i) + "\n")
+
+
 def funCplex_mp_single(fp_obInstance):
     listCplexParameters = [iCandidateFaciNum, fAlpha]
     print("Begin: Ins ")
     print("Running......")
     cpu_start = time.process_time()
     cplexSolver = usecplex.CPLEX(listCplexParameters, fp_obInstance)
-    cplexSolver.fun_fillMpModel()  # m == 2
-    # cplexSolver.fun_fillMpModel__AlloAllSelcFaci()  # m == # of all selected nodes
+    if boolAllo2Faci is True:
+            cplexSolver.fun_fillMpModel()
+    else:
+        cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
     sol = cplexSolver.model.solve()
     cpu_end = time.process_time()
     cpuTime = cpu_end - cpu_start
@@ -510,6 +549,7 @@ def funLR2():
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
+    boolAllo2FaciNum = True
     listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2FaciNum]
     listfUBEveIns = []
     listfLBEveIns = []
@@ -603,4 +643,5 @@ if __name__ == '__main__':
     # funCplex_cp_parallel()
     # funCplex_cp_ex()
     # funGA_ex()
-    funCplex_cp_ex()
+    funCplex_mp_ex()
+    # funCplex_cp_ex()

@@ -28,7 +28,8 @@ def funLR2_single(fp_obInstance):
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
-    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon]
+    boolAllo2Faci = True
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci]
     LagRela = LR2.LagrangianRelaxation(listLRParameters, fp_obInstance)
     LagRela.funInitMultiplierLambda()
     upperBound, lowerBound = LagRela.funLR_main()
@@ -42,7 +43,8 @@ def funLR2_parallel():
     listfUBEveIns = []
     listfLBEveIns = []
     f = open(insName, 'rb')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/100-node_LR2(m=2).txt', 'a')
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/500-node_LR2(m=2).txt', 'a')
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/500-node_LR2(m=all).txt', 'a')
     list_ins = []
     for i in range(iInsNum):
         ins = pickle.load(f)
@@ -69,7 +71,8 @@ def funLR2():
     listfUBEveIns = []
     listfLBEveIns = []
     f = open(insName, 'rb')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/100-node_LR2(m=2).txt', 'a')
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/500-node_LR2(m=2).txt', 'a')
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/500-node_LR2(m=all).txt', 'a')
     for i in range(iInsNum):
         print("Begin: Ins " + str(i))
         print("Running......")
