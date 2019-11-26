@@ -5,3 +5,6 @@ Every instance's objective value got by Cplex-mp method:
 
 Every instance's CPU time used by Cplex-mp method:
 [854.1779765260001, 1252.1330840580001, 794.9475232550001, 872.2652603779998, 664.8223868459997, 935.8248210309998, 680.762253935, 809.5423098409997]
+
+ins6:  gap     = 0.00224959%
+

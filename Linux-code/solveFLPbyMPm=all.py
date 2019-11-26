@@ -14,15 +14,15 @@ import LR1
 import LR2
 
 # Global variables
-iInsNum = 10
-iRunsNum = 10
+iInsNum = 8
 fAlpha = 1.0
-iCandidateFaciNum = 10
-insName = '10-nodeInstances'
+iCandidateFaciNum = 100
+insName = '100-nodeInstances'
 boolAllo2Faci = False
 
 def funCplex_mp_single(fp_obInstance):
     listCplexParameters = [iCandidateFaciNum, fAlpha]
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/100-node_Cplex_mp_data(m=all).txt', 'a')
     print("Begin: Ins ")
     print("Running......")
     cpu_start = time.process_time()
@@ -33,6 +33,11 @@ def funCplex_mp_single(fp_obInstance):
     cpuTime = cpu_end - cpu_start
     fOptimalValue = sol.get_objective_value()
     print(sol.solve_details)
+    print("Optimal value:", fOptimalValue)
+    textFile.write('\nEvery instance\'s objective value got by Cplex-mp method:\n')
+    textFile.write(str(fOptimalValue))
+    textFile.write('\n\nEvery instance\'s CPU time used by Cplex-mp method:\n')
+    textFile.write(str(cpuTime))
     print("End: Ins ")
     return cpuTime, fOptimalValue
 
@@ -42,7 +47,7 @@ def funCplex_mp_parallel():
     listfCpuTimeEveIns = []
 
     f = open(insName, 'rb')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/10-node_Cplex_mp_data(m=all).txt', 'a')
+    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/100-node_Cplex_mp_data(m=all).txt', 'a')
     list_ins = []
     for i in range(iInsNum):
         ins = pickle.load(f)
