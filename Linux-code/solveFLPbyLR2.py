@@ -30,18 +30,22 @@ def funLR2_single(fp_obInstance):
     fToleranceEpsilon = 0.0001
     boolAllo2Faci = True
     listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci]
+    cpu_start = time.process_time()
     LagRela = LR2.LagrangianRelaxation(listLRParameters, fp_obInstance)
     LagRela.funInitMultiplierLambda()
     upperBound, lowerBound = LagRela.funLR_main()
+    cpu_end = time.process_time()
+    cpuTime = cpu_end - cpu_start
     print("UB:", upperBound)
     print("LB:", lowerBound)
     print("End: Ins\n")
-    return upperBound, lowerBound
+    return upperBound, lowerBound, cpuTime
 
 
 def funLR2_parallel():
     listfUBEveIns = []
     listfLBEveIns = []
+    listfCPUTimeEveIns = []
     f = open(insName, 'rb')
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/500-node_LR2(m=2).txt', 'a')
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/500-node_LR2(m=all).txt', 'a')
@@ -56,10 +60,13 @@ def funLR2_parallel():
     for i in range(iInsNum):
         listfUBEveIns.append(listtuple_expeResult[i][0])
         listfLBEveIns.append(listtuple_expeResult[i][1])
+        listfCPUTimeEveIns.appen(listtuple_expeResult[i][2])
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
     textFile.write(str(listfLBEveIns))
+    textFile.write("\n\nCPU time for every instance:\n")
+    textFile.wirte(str(listfCPUTimeEveIns))
 
 
 def funLR2():
