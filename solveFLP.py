@@ -3,6 +3,8 @@ import numpy as np
 from multiprocessing import Pool
 import itertools
 import GA
+import GA_DM
+import GA_LS_DM
 import GAwithLocalSearch
 import usecplex
 import pickle
@@ -15,11 +17,13 @@ import LR1
 import LR2
 
 # Global variables
-iInsNum = 10
+iActualInsNum = 1
+iInsNum = 8
 iRunsNum = 10
 fAlpha = 1.0
 iCandidateFaciNum = 10
 insName = '10-nodeInstances'
+fileName = '10-node'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
@@ -28,7 +32,7 @@ iGenNum = 10
 iPopSize = 10
 fCrosRate = 0.9
 fMutRate = 0.1
-boolAllo2Faci = False
+boolAllo2Faci = True
 listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
 
 
@@ -41,6 +45,165 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
         for j in range(columnNum):
             sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
     workbook.save(excelName)
+
+
+def funGA_DM():
+    listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
+    a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
+    textFile = open(fileName + '_GADM_EveInsData(m=2).txt', 'a')
+    plotFile = open(fileName + '_GADM_PlotData(m=2).txt', 'a')
+    f = open(insName, 'rb')
+    for i in range(iActualInsNum):  # 8 instances
+        ins = pickle.load(f)
+        # genetic algorithm
+        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric1 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric2 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        for j in range(iRunsNum):  # Every instance has 10 runs experiments.
+            print("Begin: ins " + str(i) + ", Runs " + str(i))
+            print("Running......")
+            cpuStart = time.process_time()
+            # 调用GADM求解
+            GeneticAlgo = GA_DM.GA(listGAParameters, ins)
+            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2 = GeneticAlgo.funGA_main()
+            cpuEnd = time.process_time()
+            # 记录CPU time，累加
+            listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
+            # 记录最终种群中最好个体的fitness和目标函数值，累加
+            if listfBestIndFitnessEveGen[-1] != 1/listdictFinalPop[0]['objectValue']:
+                print("Wrong. Please check funGA_DM().")
+            a_2d_fEveInsEveRunObjValue[i][j] = listdictFinalPop[0]['objectValue']
+            listfAveFitnessEveryIns[i] += listfBestIndFitnessEveGen[-1]
+            listfAveObjValueEveryIns[i] += listdictFinalPop[0]['objectValue']
+            # 为绘图准备
+            new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
+            for g in range(len(listGenNum)):
+                listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
+                listiAllDiffGenDiversityMetric1[g] += listiDiversityMetric1[g]
+                listiAllDiffGenDiversityMetric2[g] += listiDiversityMetric2[g]     
+        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        # 平均每次运行的时间
+        listfAveCPUTimeEveryIns[i] /= iRunsNum
+        # 平均fitness和目标函数值
+        listfAveFitnessEveryIns[i] /= iRunsNum
+        listfAveObjValueEveryIns[i] /= iRunsNum
+        # 绘图
+        listfAveBestIndFitnessEveryGen = [fitness / iRunsNum for fitness in listfAllDiffGenBestIndFitness]
+        listiAveDiversityMetric1EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric1]
+        listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric2]
+        plotFile.write("listfAveBestIndFitnessEveryGen:\n")
+        plotFile.write(str(listfAveBestIndFitnessEveryGen))
+        plotFile.write("\n\nlistiAveDiversityMetric1EveGen:\n")
+        plotFile.write(str(listiAveDiversityMetric1EveGen))
+        plotFile.write("\n\nlistiAveDiversityMetric2EveGen:\n")
+        plotFile.write(str(listiAveDiversityMetric2EveGen))
+        plotFile.write("\n-----------------------------------------------------\n")
+        fig = plt.figure()
+        ax1 = fig.add_subplot(111)
+        l1, = ax1.plot(listGenNum, listfAveBestIndFitnessEveryGen)
+        ax2 = ax1.twinx()
+        l2, = ax2.plot(listGenNum, listiAveDiversityMetric1EveGen, 'r')
+        l3, = ax2.plot(listGenNum, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
+        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', 'Diversity curve - No neighborhood', 'Diversity curve - With neighborhood'], loc='best')
+
+    # plt.xlabel("# of Generation")
+    ax1.set_xlabel("# of Generation")
+    ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
+    ax2.set_ylabel("Diversity Metric")
+    plt.savefig(fileName + '_GADM_Curve(m=2).svg')
+    # 将数据写入text文件
+    textFile.write('Average CPU time of 10 runs for each instance:\n')
+    textFile.write(str(listfAveCPUTimeEveryIns))
+    textFile.write('\n\nAverage fitness of 10 runs for each instance:\n')
+    textFile.write(str(listfAveFitnessEveryIns))
+    textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
+    textFile.write(str(listfAveObjValueEveryIns))
+    textFile.write("\n-----------------------------------------------------\n")
+    # np.savetxt("100-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
+    excelName = fileName + '_GADM_ObjValueEveInsEveRun(m=2).xls'
+    funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
+
+
+def funGA_LS_DM():
+    listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
+    a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
+    textFile = open(fileName + '_GALSDM_EveInsData(m=2).txt', 'a')
+    plotFile = open(fileName + '_GALSDM_PlotData(m=2).txt', 'a')
+    f = open(insName, 'rb')
+    fig = plt.figure()
+    for i in range(iActualInsNum):  # 8 instances
+        ins = pickle.load(f)
+        # genetic algorithm
+        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric1 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric2 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        for j in range(iRunsNum):  # Every instance has 10 runs experiments.
+            print("Begin: ins " + str(i) + ", Runs " + str(i))
+            print("Running......")
+            cpuStart = time.process_time()
+            # 调用GADM求解
+            GeneticAlgo = GA_LS_DM.GA(listGAParameters, ins)
+            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2 = GeneticAlgo.funGA_main()
+            cpuEnd = time.process_time()
+            # 记录CPU time，累加
+            listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
+            # 记录最终种群中最好个体的fitness和目标函数值，累加
+            if listfBestIndFitnessEveGen[-1] != 1/listdictFinalPop[0]['objectValue']:
+                print("Wrong. Please check funGA_DM().")
+            a_2d_fEveInsEveRunObjValue[i][j] = listdictFinalPop[0]['objectValue']
+            listfAveFitnessEveryIns[i] += listfBestIndFitnessEveGen[-1]
+            listfAveObjValueEveryIns[i] += listdictFinalPop[0]['objectValue']
+            # 为绘图准备
+            new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
+            for g in range(len(listGenNum)):
+                listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
+                listiAllDiffGenDiversityMetric1[g] += listiDiversityMetric1[g]
+                listiAllDiffGenDiversityMetric2[g] += listiDiversityMetric2[g]     
+        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        # 平均每次运行的时间
+        listfAveCPUTimeEveryIns[i] /= iRunsNum
+        # 平均fitness和目标函数值
+        listfAveFitnessEveryIns[i] /= iRunsNum
+        listfAveObjValueEveryIns[i] /= iRunsNum
+        # 绘图
+        listfAveBestIndFitnessEveryGen = [fitness / iRunsNum for fitness in listfAllDiffGenBestIndFitness]
+        listiAveDiversityMetric1EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric1]
+        listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric2]
+        plotFile.write("listfAveBestIndFitnessEveryGen:\n")
+        plotFile.write(str(listfAveBestIndFitnessEveryGen))
+        plotFile.write("\n\nlistiAveDiversityMetric1EveGen:\n")
+        plotFile.write(str(listiAveDiversityMetric1EveGen))
+        plotFile.write("\n\nlistiAveDiversityMetric2EveGen:\n")
+        plotFile.write(str(listiAveDiversityMetric2EveGen))
+        plotFile.write("\n-----------------------------------------------------\n")
+
+        ax1 = fig.add_subplot(111)
+        l1, = ax1.plot(listGenNum, listfAveBestIndFitnessEveryGen)
+        ax2 = ax1.twinx()
+        l2, = ax2.plot(listGenNum, listiAveDiversityMetric1EveGen, 'r')
+        l3, = ax2.plot(listGenNum, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
+        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', 'Diversity curve - No neighborhood', 'Diversity curve - With neighborhood'], loc='best')
+
+    # plt.xlabel("# of Generation")
+    ax1.set_xlabel("# of Generation")
+    ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
+    ax2.set_ylabel("Diversity Metric")
+    plt.savefig(fileName + '_GALSDM_Curve(m=2).svg')
+    # 将数据写入text文件
+    textFile.write('Average CPU time of 10 runs for each instance:\n')
+    textFile.write(str(listfAveCPUTimeEveryIns))
+    textFile.write('\n\nAverage fitness of 10 runs for each instance:\n')
+    textFile.write(str(listfAveFitnessEveryIns))
+    textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
+    textFile.write(str(listfAveObjValueEveryIns))
+    textFile.write("\n-----------------------------------------------------\n")
+    # np.savetxt("100-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
+    excelName = fileName + '_GALSDM_ObjValueEveInsEveRun(m=2).xls'
+    funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 
 def funGA():
@@ -60,7 +223,7 @@ def funGA():
         ins = pickle.load(f)
         # print(ins.aiDemands)
         # genetic algorithm
-        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 不算第0代
+        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
             print("Begin: ins " + str(i) + ", Runs " + str(i))
             print("Running......")
@@ -643,5 +806,7 @@ if __name__ == '__main__':
     # funCplex_cp_parallel()
     # funCplex_cp_ex()
     # funGA_ex()
-    funCplex_mp_ex()
+    # funCplex_mp_ex()
     # funCplex_cp_ex()
+    # funGA_DM()
+    funGA_LS_DM()

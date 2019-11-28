@@ -240,35 +240,51 @@ class GA:
 
         We define that individuals in each essential group are totally same, and this function is expected to find how many groups there are in the population and how many individuals in each essential group.
         '''
-        listiIndNumEveGroup = []
-        listiIndNumBeyondEveGroup = []
         iIndNum = len(fp_listdictPop)
-        aLabel = np.zeros((iIndNum,))  # 初始化为0，如果某个体已经检测到与某些个体相同，就标记为1,2,...
+        listiIndNumEveGroup1 = []
+        listiIndNumBeyondEveGroup1 = []
+        aLabel1 = np.zeros((iIndNum,))  # 初始化为0，如果某个体已经检测到与某些个体相同，就标记为1,2,...
         # First method, do not check neighborhood
         for i in range(iIndNum):
-            if aLabel[i] == 0:
-                aLabel[i] = len(listiIndNumEveGroup) + 1
+            if aLabel1[i] == 0:
+                aLabel1[i] = len(listiIndNumEveGroup1) + 1
                 iNum = 1
                 for j in range(i+1, iIndNum):
-                    if aLabel[j] == 0:
+                    if aLabel1[j] == 0:
                         if (fp_listdictPop[i]['chromosome'] == fp_listdictPop[j]['chromosome']).all():
-                            aLabel[j] = len(listiIndNumEveGroup) + 1
+                            aLabel1[j] = len(listiIndNumEveGroup1) + 1
                             iNum += 1
-                listiIndNumEveGroup.append(iNum)
-                listiIndNumBeyondEveGroup.append(iIndNum - iNum)
-        iDiversityMetric = 0
-        for i in range(len(listiIndNumBeyondEveGroup)):
-            iDiversityMetric += (listiIndNumEveGroup[i] * listiIndNumBeyondEveGroup[i])  # 对某个个体，有多少跟他不一样的个体
-        # # Second method, check neighborhood. 两种方法不能同时出现
+                listiIndNumEveGroup1.append(iNum)
+                listiIndNumBeyondEveGroup1.append(iIndNum - iNum)
+        iDiversityMetric1 = len(listiIndNumEveGroup1)/iIndNum  # 种群中有效个体的数量
+        # Third method, check neighborhood. 
+        listiIndNumEveGroup2 = []
+        listiIndNumBeyondEveGroup2 = []
+        aLabel2 = np.zeros((iIndNum,))  # 初始化为0，如果某个体已经检测到与某些个体相同，就标记为1,2,...
+        for i in range(iIndNum):
+            if aLabel2[i] == 0:
+                listaNeighbor = self.funGenerateNeighbor(fp_listdictPop[i]['chromosome'])
+                listaNeighbor.append(fp_listdictPop[i]['chromosome'])
+                aLabel2[i] = len(listiIndNumEveGroup2) + 1
+                iNum = 1
+                for j in range(i+1, iIndNum):
+                    if aLabel2[j] == 0:
+                        for k in range(len(listaNeighbor)):
+                            if (fp_listdictPop[j]['chromosome'] == listaNeighbor[k]).all():
+                                aLabel2[j] = len(listiIndNumEveGroup2) + 1
+                                iNum += 1
+                                break
+                listiIndNumEveGroup2.append(iNum)
+                listiIndNumBeyondEveGroup2.append(iIndNum - iNum)
+        iDiversityMetric2 = len(listiIndNumEveGroup2)/iIndNum
+        # # Second method, do not check neighborhood
         # for i in range(iIndNum):
         #     if aLabel[i] == 0:
-        #         listaNeighbor = self.funGenerateNeighbor(fp_listdictPop[i]['chromosome'])
-        #         listaNeighbor.append(fp_listdictPop[i]['chromosome'])
         #         aLabel[i] = len(listiIndNumEveGroup) + 1
         #         iNum = 1
         #         for j in range(i+1, iIndNum):
         #             if aLabel[j] == 0:
-        #                 if fp_listdictPop[j]['chromosome'] in np.array(listaNeighbor):
+        #                 if (fp_listdictPop[i]['chromosome'] == fp_listdictPop[j]['chromosome']).all():
         #                     aLabel[j] = len(listiIndNumEveGroup) + 1
         #                     iNum += 1
         #         listiIndNumEveGroup.append(iNum)
@@ -276,31 +292,48 @@ class GA:
         # iDiversityMetric = 0
         # for i in range(len(listiIndNumBeyondEveGroup)):
         #     iDiversityMetric += (listiIndNumEveGroup[i] * listiIndNumBeyondEveGroup[i])  # 对某个个体，有多少跟他不一样的个体
-        return iDiversityMetric
+        return iDiversityMetric1, iDiversityMetric2, listiIndNumEveGroup1, listiIndNumBeyondEveGroup1, listiIndNumEveGroup2, listiIndNumBeyondEveGroup2
+
+    def funGenerateNeighbor(self, fp_aChromosome):
+        if self.iIndLen != fp_aChromosome.size:
+            print("Wrong in funGetIndNeighbor()")
+        listaNeighbor = []
+        for i in range(self.iIndLen):
+            aTemChromosome = copy.deepcopy(fp_aChromosome)
+            aTemChromosome[i] = (aTemChromosome[i] + 1) % 2
+            listaNeighbor.append(aTemChromosome)
+        return listaNeighbor
 
     def funGA_main(self):
         '''
         The main process of genetic algorithm.
         @return listdictFinalPop
         '''
-        listiDiversityMetric = []
+        listiDiversityMetric1 = []
+        listiDiversityMetric2 = []
         listdictInitPop = self.funInitializePop()
         # By this time, both CurrPop and InitPop point to the same variable.
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
-        listiDiversityMetric.append(self.funMeasurePopDiversity(listdictInitPop))
+        # 评估种群多样性
+        tupleDiversityMetrics = self.funMeasurePopDiversity(listdictInitPop)
+        listiDiversityMetric1.append(tupleDiversityMetrics[0])
+        listiDiversityMetric2.append(tupleDiversityMetrics[1])
         listdictCurrPop = copy.deepcopy(listdictInitPop)
         # record the fitness of the best individual for every generation
         listfBestIndFitness = []
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
         listfBestIndFitness.append(listdictBestInd[0]['fitness'])
         for gen in range(self.iGenNum):
+            print("Generation:", gen)
             listdictPopAfCros = self.funCrossover(listdictCurrPop,
                                                   self.fCrosRate)
             listdictPopAfMuta = self.funMutation(listdictPopAfCros)
             listdictCurrPop = self.funSurvival(listdictCurrPop,
                                                listdictPopAfMuta)
             listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
-            listiDiversityMetric.append(self.funMeasurePopDiversity(listdictCurrPop))
+            tupleDiversityMetrics = self.funMeasurePopDiversity(listdictCurrPop)
+            listiDiversityMetric1.append(tupleDiversityMetrics[0])
+            listiDiversityMetric2.append(tupleDiversityMetrics[1])
         listdictFinalPop = listdictCurrPop
         # plot figure
         listGenIndex = list(np.linspace(0, self.iGenNum, num=(self.iGenNum + 1)))
@@ -309,7 +342,7 @@ class GA:
         # plt.xlabel("# of Generation")
         # plt.ylabel("Diversity Metric")
         # plt.savefig("line.jpg")
-        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric
+        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2
 
 
 if __name__ == '__main__':
@@ -322,9 +355,9 @@ if __name__ == '__main__':
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    iGenNum = 60
+    iGenNum = 10
     iPopSize = 30
-    iCandidateFaciNum = 50
+    iCandidateFaciNum = 10
     fCrosRate = 0.9
     fMutRate = 0.1
     fAlpha = 1
@@ -337,16 +370,18 @@ if __name__ == '__main__':
     obInstance.funGenerateInstances()
     # genetic algorithm
     geneticAlgo = GA(listGAParameters, obInstance)
-    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric = geneticAlgo.funGA_main()
+    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2 = geneticAlgo.funGA_main()
     end = time.time()
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    ax1.plot(listGenNum, listfBestIndFitnessEveGen)
+    l1, = ax1.plot(listGenNum, listfBestIndFitnessEveGen)
     ax1.set_xlabel("# of Generation")
     ax1.set_ylabel("Fitness Of Best Individual")
     ax2 = ax1.twinx()
-    ax2.plot(listGenNum, listiDiversityMetric, 'r')
+    l2, = ax2.plot(listGenNum, listiDiversityMetric1, 'r')
+    l3, = ax2.plot(listGenNum, listiDiversityMetric2, 'purple', linestyle='--')
     ax2.set_ylabel("Diversity Metric")
-    # plt.show()
-    plt.savefig("line2.jpg")
+    plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', 'Diversity curve - No neighborhood', 'Diversity curve - With neighborhood'], loc='best')
+    plt.show()
+    # plt.savefig("line3.jpg")
     print("CPU Time:", end - start)

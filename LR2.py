@@ -256,7 +256,7 @@ class LagrangianRelaxation:
         print("n: ", n)
         print("UB update number: ", UBupdateNum)
         print("LB update number: ", LBupdateNum)
-        print("Xj: ", self.aLocaSolXj)
+        # print("Xj: ", self.aLocaSolXj)
         print("Upper bound: ", self.fBestUpperBound)
         print("Lower bound: ", self.fBestLowerBoundZLambda)
         print("Gap: ", (self.fBestUpperBound - self.fBestLowerBoundZLambda) / self.fBestUpperBound)
