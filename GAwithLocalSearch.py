@@ -270,6 +270,7 @@ class GA:
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
         listfBestIndFitness.append(listdictBestInd[0]['fitness'])
         for gen in range(self.iGenNum):
+            print("Gen:", gen)
             listdictPopAfCros = self.funCrossover(listdictCurrPop,
                                                   self.fCrosRate)
             listdictPopAfMuta = self.funMutation(listdictPopAfCros)
@@ -297,23 +298,23 @@ if __name__ == '__main__':
 
     The value of  2:iIndLen and 0:iSitesNum should be equal.
     '''
-    iGenNum = 60
-    iPopSize = 30
-    iCandidateFaciNum = 30
+    iGenNum = 100
+    iPopSize = 200
+    iCandidateFaciNum = 50
     fCrosRate = 0.9
     fMutRate = 0.1
     fAlpha = 1
     boolAllo2Faci = True
     listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
-    start = time.time()
+    start = time.process_time()
     # generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
     obInstance.funGenerateInstances()
     # genetic algorithm
     geneticAlgo = GA(listGAParameters, obInstance)
     listdictFinalPop, listGenNum, listfBestIndFitnessEveGen = geneticAlgo.funGA_main()
-    end = time.time()
+    end = time.process_time()
     plt.figure()
     plt.plot(listGenNum, listfBestIndFitnessEveGen)
     plt.xlabel("# of Generation")
