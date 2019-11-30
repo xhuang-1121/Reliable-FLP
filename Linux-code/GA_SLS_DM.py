@@ -248,37 +248,37 @@ class GA:
         Use local search to the best 10 individuals
         '''
         listdictNeighborPop = []
-        # 弱local search
-        for i in range(10):  # Do local search process for the best 10 individuals
-            # 检查个体i在前面有没有被搜索过
-            boolNotSearched = True
-            for t in range(len(self.listaLocalSearchTestRepeat)):
-                iHammingDist = np.count_nonzero(fp_listdictCurrPop[i]['chromosome'] != self.listaLocalSearchTestRepeat[t])
-                if iHammingDist <= 1:
-                    boolNotSearched = False
-                    break
-            if boolNotSearched:
-                self.listaLocalSearchTestRepeat.append(fp_listdictCurrPop[i]['chromosome'])
-                for j in range(self.iIndLen):
-                    dictInd = copy.deepcopy(fp_listdictCurrPop[i])
-                    dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
-                    dictInd['fitness'] = 0
-                    dictInd['objectValue'] = 0
-                    listdictNeighborPop.append(dictInd)
-        # evaluate the listdictNeighborPop
-        print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
-        listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
-
-        # # 强local search
+        # # 弱local search
         # for i in range(10):  # Do local search process for the best 10 individuals
-        #     for j in range(self.iIndLen):
-        #         dictInd = copy.deepcopy(fp_listdictCurrPop[i])
-        #         dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
-        #         dictInd['fitness'] = 0
-        #         dictInd['objectValue'] = 0
-        #         listdictNeighborPop.append(dictInd)
+        #     # 检查个体i在前面有没有被搜索过
+        #     boolNotSearched = True
+        #     for t in range(len(self.listaLocalSearchTestRepeat)):
+        #         iHammingDist = np.count_nonzero(fp_listdictCurrPop[i]['chromosome'] != self.listaLocalSearchTestRepeat[t])
+        #         if iHammingDist <= 1:
+        #             boolNotSearched = False
+        #             break
+        #     if boolNotSearched:
+        #         self.listaLocalSearchTestRepeat.append(fp_listdictCurrPop[i]['chromosome'])
+        #         for j in range(self.iIndLen):
+        #             dictInd = copy.deepcopy(fp_listdictCurrPop[i])
+        #             dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
+        #             dictInd['fitness'] = 0
+        #             dictInd['objectValue'] = 0
+        #             listdictNeighborPop.append(dictInd)
         # # evaluate the listdictNeighborPop
+        # print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
         # listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
+
+        # 强local search
+        for i in range(10):  # Do local search process for the best 10 individuals
+            for j in range(self.iIndLen):
+                dictInd = copy.deepcopy(fp_listdictCurrPop[i])
+                dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
+                dictInd['fitness'] = 0
+                dictInd['objectValue'] = 0
+                listdictNeighborPop.append(dictInd)
+        # evaluate the listdictNeighborPop
+        listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
 
         return listdictNeighborPopAfEva
 
