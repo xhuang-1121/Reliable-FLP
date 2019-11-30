@@ -363,6 +363,7 @@ def funGA_LS_DM_parallel():
     excelName = fileName + '_GALSDM_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
+
 '''
 def funGA_LS_DM_single(fp_tuple_combOfInsRuns):
     print("Begin:")
@@ -460,6 +461,7 @@ def funGA_LS_DM_parallel():
     excelName = fileName + '_GALSDM_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 '''
+
 
 def funGA_LS_DM():
     listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
