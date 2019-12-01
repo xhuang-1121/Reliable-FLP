@@ -77,7 +77,7 @@ def funGA_LS_DM_parallel():
     for i in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
-    listtuple_combOfInsRuns = list(itertools.product(list_ins[0:1], list_iRunsIndex))
+    listtuple_combOfInsRuns = list(itertools.product(list_ins[4:5], list_iRunsIndex))
     listtuple_expeResult = pool.map(funGA_LS_DM_single, listtuple_combOfInsRuns)  # list中的每个元素都是一个元组，每个元组中存储某instance的某一次run得到的数据
     pool.close()
     pool.join()
@@ -148,7 +148,7 @@ def funGA_LS_DM_parallel():
         ax3.set_xticklabels(listFeXCoordinate, rotation=10)
         for label in ax3.xaxis.get_ticklabels():
             label.set_fontsize(6)
-        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', 'Diversity curve - No neighborhood', 'Diversity curve - With neighborhood'], loc='best')
+        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', '0-HDR', '1-HDR'], loc='best')
 
     # plt.xlabel("# of Generation")
     ax1.set_xlabel("# of Generation")
@@ -156,11 +156,11 @@ def funGA_LS_DM_parallel():
     ax2.set_ylabel("Diversity Metric")
     plt.savefig(fileName + '_GASLSDM_Curve(m=2).svg')
     # 将数据写入text文件
-    textFile.write('Average CPU time of 10 runs for each instance:\n')
+    textFile.write('Average CPU time of'+str(iRunsNum)+'runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))
-    textFile.write('\n\nAverage fitness of 10 runs for each instance:\n')
+    textFile.write('\n\nAverage fitness of'+str(iRunsNum)+'runs for each instance:\n')
     textFile.write(str(listfAveFitnessEveryIns))
-    textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
+    textFile.write('\n\nAverage objective value of'+str(iRunsNum)+'runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
     textFile.write("\n-----------------------------------------------------\n")
     excelName = fileName + '_GASLSDM_ObjValueEveInsEveRun(m=2).xls'
@@ -227,7 +227,7 @@ def funGA_LS_DM():
         ax2 = ax1.twinx()
         l2, = ax2.plot(listGenNum, listiAveDiversityMetric1EveGen, 'r')
         l3, = ax2.plot(listGenNum, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
-        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', 'Diversity curve - No neighborhood', 'Diversity curve - With neighborhood'], loc='best')
+        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', '0-HDR', '1-HDR'], loc='best')
 
     # plt.xlabel("# of Generation")
     ax1.set_xlabel("# of Generation")
@@ -235,11 +235,11 @@ def funGA_LS_DM():
     ax2.set_ylabel("Diversity Metric")
     plt.savefig(fileName + '_GAALSDM_Curve(m=2).svg')
     # 将数据写入text文件
-    textFile.write('Average CPU time of 10 runs for each instance:\n')
+    textFile.write('Average CPU time of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))
-    textFile.write('\n\nAverage fitness of 10 runs for each instance:\n')
+    textFile.write('\n\nAverage fitness of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveFitnessEveryIns))
-    textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
+    textFile.write('\n\nAverage objective value of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
     textFile.write("\n-----------------------------------------------------\n")
     # np.savetxt("100-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)

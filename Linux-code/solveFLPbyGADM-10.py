@@ -20,15 +20,15 @@ iActualInsNum = 1
 iInsNum = 8
 iRunsNum = 20
 fAlpha = 1.0
-iCandidateFaciNum = 100
-insName = '100-nodeInstances'
-fileName = '100-node'
+iCandidateFaciNum = 10
+insName = '10-nodeInstances'
+fileName = '10-node'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
-iGenNum = 400
-iPopSize = 200
+iGenNum = 60
+iPopSize = 30
 fCrosRate = 0.9
 fMutRate = 0.1
 boolAllo2Faci = True
@@ -75,7 +75,7 @@ def funGA_DM_parallel():
     for i in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
-    listtuple_combOfInsRuns = list(itertools.product(list_ins[4:5], list_iRunsIndex))
+    listtuple_combOfInsRuns = list(itertools.product(list_ins[3:4], list_iRunsIndex))
     listtuple_expeResult = pool.map(funGA_DM_single, listtuple_combOfInsRuns)  # list中的每个元素都是一个元组，每个元组中存储某instance的某一次run得到的数据
     pool.close()
     pool.join()
@@ -135,7 +135,7 @@ def funGA_DM_parallel():
         # 上方X轴
         ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
         ax3.set_xlabel("# of Fitness Evaluation")
-        listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
+        listfFeIndex = list(np.linspace(0, iGenNum, num=6+1))
         # print("listFeIndex:", listfFeIndex)
         listFeXCoordinate = []
         for i in range(len(listfFeIndex)):

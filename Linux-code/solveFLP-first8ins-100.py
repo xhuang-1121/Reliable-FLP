@@ -17,14 +17,14 @@ import LR2
 iInsNum = 8
 iRunsNum = 10
 fAlpha = 1.0
-iCandidateFaciNum = 30
-insName = '30-nodeInstances'
+iCandidateFaciNum = 100
+insName = '100-nodeInstances'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
-iGenNum = 100
-iPopSize = 50
+iGenNum = 400
+iPopSize = 200
 fCrosRate = 0.9
 fMutRate = 0.1
 boolAllo2Faci = True
@@ -68,8 +68,8 @@ def funGA_parallel_8ins():
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool(40)
     list_iRunsIndex = [i for i in range(iRunsNum)]
-    plotFile = open('30-node_GA_poltData(m=2)-first8.txt', 'a')
-    textFile = open('30-node_GA_EveInsData(m=2)-first8.txt', 'a')
+    plotFile = open('100-node_GA_poltData(m=2)-first8.txt', 'a')
+    textFile = open('100-node_GA_EveInsData(m=2)-first8.txt', 'a')
     f = open(insName, 'rb')
     list_ins = []
     for i in range(iInsNum):
@@ -113,8 +113,8 @@ def funGA_parallel_8ins():
 
     plt.xlabel("# of Generation")
     plt.ylabel("Fitness Of Best Individual (× 1e-3)")
-    plt.title("Fitness Value Curves (30-node, m=2)")
-    plt.savefig("30-node_GA_ConvergenceCurve(m=2)-first8.svg")
+    plt.title("Fitness Value Curves (100-node, m=2)")
+    plt.savefig("100-node_GA_ConvergenceCurve(m=2)-first8.svg")
     # 将数据写入text文件
     textFile.write('\nAverage CPU time of 10 runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))
@@ -123,7 +123,7 @@ def funGA_parallel_8ins():
     textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
     #np.savetxt("30-node_GA_ObjValueEveInsEveRun(m=2)-first8.txt", a_2d_fEveInsEveRunObjValue)
-    excelName = '30-node_GA_ObjValueEveInsEveRun(m=2)-first8.xls'
+    excelName = '100-node_GA_ObjValueEveInsEveRun(m=2)-first8.xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 

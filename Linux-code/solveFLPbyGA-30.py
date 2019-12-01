@@ -14,7 +14,7 @@ import LR1
 import LR2
 
 # Global variables
-iInsNum = 10
+iInsNum = 8
 iRunsNum = 10
 fAlpha = 1.0
 iCandidateFaciNum = 30
@@ -71,7 +71,7 @@ def funGA_parallel():
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool()
     list_iRunsIndex = [i for i in range(iRunsNum)]
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLP/30-node_GA_EveInsData(m=2).txt', 'a')
+    textFile = open('30-node_GA_EveInsData(m=2).txt', 'a')
     f = open(insName, 'rb')
     list_ins = []
     for i in range(iInsNum):
