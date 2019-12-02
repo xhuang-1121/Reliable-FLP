@@ -47,11 +47,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
 
 
 def funGA_DM_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState()
     print("Begin:")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GADM求解
-    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart

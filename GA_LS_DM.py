@@ -10,21 +10,22 @@ import time
 
 
 class Individal:
-    def __init__(self, iIndLen):
+    def __init__(self, iIndLen, fp_local_state):
         self.aChromosome = np.zeros((iIndLen, ), dtype=np.int)
         self.fFitness = 0.0
         self.objectValue = 0.0
         for i in range(iIndLen):
-            if np.random.rand() <= 0.5:
+            if fp_local_state.rand() <= 0.5:
                 self.aChromosome[i] = 1
 
 
 class GA:
-    def __init__(self, listGAParameters, fp_obInstance):
+    def __init__(self, listGAParameters, fp_obInstance, fp_local_state):
         '''
         Initialize parameters of GA, import instance
         @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
         '''
+        self.local_state = fp_local_state
         self.iGenNum = listGAParameters[0]
         self.iPopSize = listGAParameters[1]
         self.iIndLen = listGAParameters[2]
@@ -47,7 +48,7 @@ class GA:
         '''
         listdictInitPop = []
         for i in range(self.iPopSize):
-            ind = Individal(self.iIndLen)
+            ind = Individal(self.iIndLen, self.local_state)
             listdictInitPop.append({
                 'chromosome': ind.aChromosome,
                 'fitness': ind.fFitness,
@@ -148,7 +149,7 @@ class GA:
         for i in range(len(fp_listdictCurrPop)):
             fProb.append(fp_listdictCurrPop[i]['fitness'] / fFitnessSum)
         if fp_iIndIndex is None:
-            adictParents = np.random.choice(fp_listdictCurrPop,
+            adictParents = self.local_state.choice(fp_listdictCurrPop,
                                             size=2,
                                             p=fProb)
             listdictParents.append(adictParents[0])
@@ -156,7 +157,7 @@ class GA:
         else:
             listdictParents.append(fp_listdictCurrPop[fp_iIndIndex])
             listdictParents.append(
-                np.random.choice(fp_listdictCurrPop, size=1, p=fProb)[0])
+                self.local_state.choice(fp_listdictCurrPop, size=1, p=fProb)[0])
         # 根据实验，listdictParents跟fp_listdictCurrPop是一体的，改变一个会影响另外一个
         return listdictParents
 
@@ -176,7 +177,7 @@ class GA:
 
         listdictPopAfCros = []
         for i in range(len(fp_listdictCurrPop)):
-            if np.random.rand() < fp_fCrosRate:
+            if self.local_state.rand() < fp_fCrosRate:
                 aOffs1 = np.zeros((self.iIndLen, ), dtype=np.int)
                 aOffs2 = np.zeros((self.iIndLen, ), dtype=np.int)
                 listdictParents = []
@@ -186,7 +187,7 @@ class GA:
                     listdictParents = self.funSelectParents(fp_listdictCurrPop,
                                                             fp_iIndIndex=i)
                 # One-point crossover
-                crossPoint = np.random.randint(1, self.iIndLen)
+                crossPoint = self.local_state.randint(1, self.iIndLen)
                 for j in range(self.iIndLen):
                     if j < crossPoint:
                         aOffs1[j] = listdictParents[0]['chromosome'][j]
@@ -214,7 +215,7 @@ class GA:
         for i in range(len(fp_listdictPopAfCros)):
             for j in range(self.iIndLen):
                 # For every individual's every gene, determining whether mutating
-                if np.random.rand() < self.fMutRate:
+                if self.local_state.rand() < self.fMutRate:
                     fp_listdictPopAfCros[i]['chromosome'][j] = (
                         fp_listdictPopAfCros[i]['chromosome'][j] + 1) % 2
         listdictPopAfMuta = self.funEvaluatePop(

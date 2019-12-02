@@ -16,9 +16,9 @@ import LR1
 import LR2
 
 # Global variables
-iActualInsNum = 1
+iActualInsNum = 8
 iInsNum = 8
-iRunsNum = 20
+iRunsNum = 10
 fAlpha = 1.0
 iCandidateFaciNum = 100
 insName = '100-nodeInstances'
@@ -47,11 +47,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
 
 
 def funGA_DM_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState()
     print("Begin:")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GADM求解
-    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
@@ -75,7 +76,7 @@ def funGA_DM_parallel():
     for i in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
-    listtuple_combOfInsRuns = list(itertools.product(list_ins[4:5], list_iRunsIndex))
+    listtuple_combOfInsRuns = list(itertools.product(list_ins, list_iRunsIndex))
     listtuple_expeResult = pool.map(funGA_DM_single, listtuple_combOfInsRuns)  # list中的每个元素都是一个元组，每个元组中存储某instance的某一次run得到的数据
     pool.close()
     pool.join()
@@ -124,22 +125,25 @@ def funGA_DM_parallel():
         plotFile.write("\n\nlistiAveFitEvaNumByThisGen:\n")
         plotFile.write(str(listiAveFitEvaNumByThisGen))
         plotFile.write("\n------------------------new instance-----------------------------\n")
+        
         fig = plt.figure()
-        listGenIndex = [i for i in range(iGenNum + 1)]
+        listGenIndex = [g for g in range(iGenNum + 1)]
         ax1 = fig.add_subplot(111)
         l1, = ax1.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
         # 右方Y轴
         ax2 = ax1.twinx()
         l2, = ax2.plot(listGenIndex, listiAveDiversityMetric1EveGen, 'r')
         l3, = ax2.plot(listGenIndex, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
+        for label in ax2.yaxis.get_ticklabels():
+            label.set_fontsize(6)
         # 上方X轴
         ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
         ax3.set_xlabel("# of Fitness Evaluation")
         listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
         # print("listFeIndex:", listfFeIndex)
         listFeXCoordinate = []
-        for i in range(len(listfFeIndex)):
-            listFeXCoordinate.append(listiAveFitEvaNumByThisGen[int(listfFeIndex[i])])
+        for f in range(len(listfFeIndex)):
+            listFeXCoordinate.append(listiAveFitEvaNumByThisGen[int(listfFeIndex[f])])
         # print("listFeXCoordinate:", listFeXCoordinate)
         ax3.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
         ax3.set_xticks(listfFeIndex)
@@ -147,12 +151,19 @@ def funGA_DM_parallel():
         for label in ax3.xaxis.get_ticklabels():
             label.set_fontsize(6)
         plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', '0-HDR', '1-HDR'], loc='best')
+        
+        ax1.set_xlabel("# of Generation")
+        ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
+        ax2.set_ylabel("Diversity Metric")
+        plt.savefig(fileName + '_GADM_Curve(m=2)-ins'+str(i)+'.svg')
 
-    # plt.xlabel("# of Generation")
+    '''
     ax1.set_xlabel("# of Generation")
     ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
     ax2.set_ylabel("Diversity Metric")
     plt.savefig(fileName + '_GADM_Curve(m=2).svg')
+    '''
+    
     # 将数据写入text文件
     textFile.write('Average CPU time of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveCPUTimeEveryIns))

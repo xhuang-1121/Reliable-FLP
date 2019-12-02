@@ -44,11 +44,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
 
 
 def funGA_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState()
     print("Begin: ins ")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GA求解
-    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     finalPop, listGenNum, listfBestIndFitness = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
@@ -114,7 +115,7 @@ def funGA_parallel():
 
     plt.xlabel("# of Generation")
     plt.ylabel("Fitness Of Best Individual (× 1e-3)")
-    plt.title("Convergence Curves (30-node, m=2)")
+    plt.title("Fitness Value Curves (30-node, m=2)")
     plt.savefig("30-node_GA_ConvergenceCurve(m=2)")
     # 将数据写入text文件
     textFile.write('\nAverage CPU time of 10 runs for each instance:\n')
@@ -123,7 +124,6 @@ def funGA_parallel():
     textFile.write(str(listfAveFitnessEveryIns))
     textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
-    np.savetxt("/home/zhanghan/pythonworkspace/reliableFLP/30-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
     excelName = '30-node_GA_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 

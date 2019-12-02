@@ -42,11 +42,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     workbook.save(excelName)
 
 def funGA_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState()
     print("Begin: ins ")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GA求解
-    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     finalPop, listGenNum, listfBestIndFitness = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
@@ -68,8 +69,8 @@ def funGA_parallel_8ins():
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool(40)
     list_iRunsIndex = [i for i in range(iRunsNum)]
-    plotFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/50-node_GA_poltData(m=#SelectedNodes)-first8.txt', 'a')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/50-node_GA_EveInsData(m=#SelectedNodes)-first8.txt', 'a')
+    plotFile = open('50-node_GA_poltData(m=#SelectedNodes)-first8.txt', 'a')
+    textFile = open('50-node_GA_EveInsData(m=#SelectedNodes)-first8.txt', 'a')
     f = open(insName, 'rb')
     list_ins = []
     for i in range(iInsNum):

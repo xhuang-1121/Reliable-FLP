@@ -42,11 +42,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     workbook.save(excelName)
 
 def funGA_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState()
     print("Begin: ins ")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GA求解
-    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     finalPop, listGenNum, listfBestIndFitness = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
