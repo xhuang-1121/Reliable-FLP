@@ -304,7 +304,7 @@ class GA:
         listdictNeighborPop = []
         iTempLocalSearchedIndNum = len(self.listaLocalSearchTestRepeat)
         # 弱local search
-        for i in range(10):  # Do local search process for the best 10 individuals
+        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
@@ -354,7 +354,7 @@ class GA:
                     dictInd['fitness'] = 0
                     dictInd['objectValue'] = 0
                     listdictNeighborPop.append(dictInd)
-            if iLocalSearchNum == 10:
+            if iLocalSearchNum == self.iLocalSearchIndNumEveGen:
                 break
         # evaluate the listdictNeighborPop
         self.iNewLocalSearchedIndNumAdd = len(self.listaLocalSearchTestRepeat) - iTempLocalSearchedIndNum
@@ -370,7 +370,7 @@ class GA:
         print("Strong")
         listdictNeighborPop = []
         # 强local search
-        for i in range(10):  # Do local search process for the best 10 individuals
+        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
@@ -444,7 +444,7 @@ class GA:
                 listiIndNumBeyondEveGroup1.append(iIndNum - iNum)
         iDiversityMetric1 = len(listiIndNumEveGroup1)/iIndNum  # 种群中有效个体的数量
 
-        # 检查当前种群中LS过的个体(不包括本代的前10个个体)的邻域个体所占比例
+        # 检查当前种群中LS过的个体(不包括本代局部搜索过的个体)的邻域个体所占比例
         iNeighborNumHistory = 0
         for i in range(iIndNum):
             for j in range(len(self.listaLocalSearchTestRepeat) - self.iNewLocalSearchedIndNumAdd):
@@ -452,8 +452,9 @@ class GA:
                 if iHammingDistIJ <= 1:
                     iNeighborNumHistory += 1
                     break
-        iNeighborProportionHistory = iNeighborNumHistory / iIndNum
-        # 检查当前种群中LS过的个体(包括本代的前10个个体)的邻域个体所占比例
+        fProportion_belongToLocalSearchedIndNeighbor_exceptCurrGenLocalSearchedIndNeighbor = iNeighborNumHistory / iIndNum
+
+        # 检查当前种群中LS过的个体(包括本代局部搜索过的个体)的邻域个体所占比例
         iNeighborNumHistory2 = 0
         for i in range(iIndNum):
             for j in range(len(self.listaLocalSearchTestRepeat)):
@@ -461,7 +462,8 @@ class GA:
                 if iHammingDistIJ <= 1:
                     iNeighborNumHistory2 += 1
                     break
-        iNeighborProportionHistory2 = iNeighborNumHistory2 / iIndNum
+        fProportion_belongToAllLocalSearchedIndNeighbor = iNeighborNumHistory2 / iIndNum
+
         # 检查当前种群中的个体属于当前种群前十个个体邻域的比例
         iNeighborNumOnlyCurr = 10
         for i in range(10, iIndNum):
@@ -472,66 +474,16 @@ class GA:
                     break
         iNeighborProportionOnlyCurr = iNeighborNumOnlyCurr / iIndNum
 
-        # Second method, check neighborhood. 已经放弃不用该指标
+        # 种群中各个个体汉明距离的方差
         listiHamDist = []
         for i in range(iIndNum):
             for j in range(i+1, iIndNum):
                 iHamDist = np.count_nonzero(fp_listdictPop[i]['chromosome'] != fp_listdictPop[j]['chromosome'])
                 listiHamDist.append(iHamDist)
         fHamDistVar = np.var(listiHamDist)
-        listiIndNumEveGroup2 = []
-        listiIndNumBeyondEveGroup2 = []
-        # aLabel2 = np.zeros((iIndNum,))  # 初始化为0，如果某个体已经检测到与某些个体相同，就标记为1,2,...
-        # for i in range(iIndNum):
-        #     if aLabel2[i] == 0:
-        #         aLabel2[i] = len(listiIndNumEveGroup2) + 1
-        #         iNum = 1
-        #         for j in range(i+1, iIndNum):
-        #             if aLabel2[j] == 0:
-        #                 iHammingDist = np.count_nonzero(fp_listdictPop[j]['chromosome'] != fp_listdictPop[i]['chromosome'])
-        #                 if iHammingDist <= 1:
-        #                     aLabel2[j] = len(listiIndNumEveGroup2) + 1
-        #                     iNum += 1
-        #         listiIndNumEveGroup2.append(iNum)
-        #         listiIndNumBeyondEveGroup2.append(iIndNum - iNum)
-        # Second method的第2种实现方法
-        # listiIndNumEveGroup3 = []
-        # listiIndNumBeyondEveGroup3 = []
-        # aLabel3 = np.zeros((iIndNum,))
-        # for i in range(iIndNum):
-        #     if aLabel3[i] == 0:
-        #         listaNeighbor = self.funGenerateNeighbor(fp_listdictPop[i]['chromosome'])
-        #         listaNeighbor.append(fp_listdictPop[i]['chromosome'])
-        #         aLabel3[i] = len(listiIndNumEveGroup3) + 1
-        #         iNum = 1
-        #         for j in range(i+1, iIndNum):
-        #             if aLabel3[j] == 0:
-        #                 for k in range(len(listaNeighbor)):
-        #                     if (fp_listdictPop[j]['chromosome'] == listaNeighbor[k]).all():
-        #                         aLabel3[j] = len(listiIndNumEveGroup3) + 1
-        #                         iNum += 1
-        #                         break
-        #         listiIndNumEveGroup3.append(iNum)
-        #         listiIndNumBeyondEveGroup3.append(iIndNum - iNum)
-        # print("listiIndNumEveGroup3:", listiIndNumEveGroup3)
-        # iDiversityMetric2 = len(listiIndNumEveGroup2)/iIndNum
         iDiversityMetric2 = fHamDistVar
-        # # Third method, do not check neighborhood，已经放弃不用该指标
-        # for i in range(iIndNum):
-        #     if aLabel[i] == 0:
-        #         aLabel[i] = len(listiIndNumEveGroup) + 1
-        #         iNum = 1
-        #         for j in range(i+1, iIndNum):
-        #             if aLabel[j] == 0:
-        #                 if (fp_listdictPop[i]['chromosome'] == fp_listdictPop[j]['chromosome']).all():
-        #                     aLabel[j] = len(listiIndNumEveGroup) + 1
-        #                     iNum += 1
-        #         listiIndNumEveGroup.append(iNum)
-        #         listiIndNumBeyondEveGroup.append(iIndNum - iNum)
-        # iDiversityMetric = 0
-        # for i in range(len(listiIndNumBeyondEveGroup)):
-        #     iDiversityMetric += (listiIndNumEveGroup[i] * listiIndNumBeyondEveGroup[i])  # 对某个个体，有多少跟他不一样的个体
-        return iDiversityMetric1, iDiversityMetric2, iNeighborProportionHistory, iNeighborProportionOnlyCurr, iNeighborProportionHistory2
+
+        return iDiversityMetric1, iDiversityMetric2, fProportion_belongToLocalSearchedIndNeighbor_exceptCurrGenLocalSearchedIndNeighbor, iNeighborProportionOnlyCurr, fProportion_belongToAllLocalSearchedIndNeighbor
 
     def funGenerateNeighbor(self, fp_aChromosome):
         if self.iIndLen != fp_aChromosome.size:
@@ -548,9 +500,9 @@ class GA:
         The main process of genetic algorithm.
         @return listdictFinalPop
         '''
-        listfHistoryNeighborProportionOf10IndEveGen = []
-        listfOnlyCurrNeighborProportionOf10IndEveGen = []
-        listfProportion_belongToNeighborOfLocalSearchedInd = []
+        listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd = []
+        listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor = []
+        listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd = []
         listiDiversityMetric1 = []
         listiDiversityMetric2 = []
         listiFitEvaNumByThisGen = []
@@ -561,9 +513,9 @@ class GA:
         tupleDiversityMetrics = self.funMeasurePopDiversity(listdictInitPop)
         listiDiversityMetric1.append(tupleDiversityMetrics[0])
         listiDiversityMetric2.append(tupleDiversityMetrics[1])
-        listfHistoryNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[2])
-        listfOnlyCurrNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[3])
-        listfProportion_belongToNeighborOfLocalSearchedInd.append(tupleDiversityMetrics[4])
+        listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd.append(tupleDiversityMetrics[2])
+        listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor.append(tupleDiversityMetrics[3])
+        listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd.append(tupleDiversityMetrics[4])
         listdictCurrPop = copy.deepcopy(listdictInitPop)
 
         # listdictCurrPop.extend(self.funInitPopLocalSearch(listdictCurrPop))  # 对初始种群的全部个体都做一次局部搜索
@@ -587,7 +539,7 @@ class GA:
             tupleDiversityMetrics = self.funMeasurePopDiversity(listdictCurrPop)
             listiDiversityMetric1.append(tupleDiversityMetrics[0])
             listiDiversityMetric2.append(tupleDiversityMetrics[1])
-            listfHistoryNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[2])
+            listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd.append(tupleDiversityMetrics[2])
 
             # # 种群规模自适应
             # if tupleDiversityMetrics[2] > 0.8:
@@ -595,8 +547,8 @@ class GA:
             # if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
             #     self.iLocalSearchIndNumEveGen *= 2
 
-            listfOnlyCurrNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[3])
-            listfProportion_belongToNeighborOfLocalSearchedInd.append(tupleDiversityMetrics[4])
+            listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor.append(tupleDiversityMetrics[3])
+            listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd.append(tupleDiversityMetrics[4])
             listiFitEvaNumByThisGen.append(self.iTotalFitEvaNum)
         listdictFinalPop = listdictCurrPop
         # tupleFinalPopDiversityMetric = self.funMeasurePopDiversity(listdictFinalPop)
@@ -619,7 +571,7 @@ class GA:
                     break
         print("iInitIndInSearchedNeighborNum:", iInitIndInSearchedNeighborNum)
 
-        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfHistoryNeighborProportionOf10IndEveGen, listfOnlyCurrNeighborProportionOf10IndEveGen, listfProportion_belongToNeighborOfLocalSearchedInd
+        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd
 
 
 if __name__ == '__main__':
