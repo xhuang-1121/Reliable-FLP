@@ -36,6 +36,7 @@ class LS:
         self.listaLocalSearchTestRepeat = []
         self.iTotalFitEvaNum = 0
         self.iNewLocalSearchedIndNumAdd = 0
+        self.iLocalSearchIndNumEveGen = 10
         self.obInstance = fp_obInstance
         if self.obInstance.iSitesNum != self.iIndLen:
             print(
@@ -153,6 +154,7 @@ class LS:
         fp_listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
         # only the first μ can survive
         fp_listdictCurrPop = fp_listdictCurrPop[:self.iPopSize]
+        print()
         return fp_listdictCurrPop
 
     def funLocalNeighborhood(self, fp_listdictCurrPop):
@@ -211,7 +213,7 @@ class LS:
         listdictNeighborPop = []
         iTempLocalSearchedIndNum = len(self.listaLocalSearchTestRepeat)
         # 弱local search
-        for i in range(10):  # Do local search process for the best 10 individuals
+        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
@@ -261,7 +263,7 @@ class LS:
                     dictInd['fitness'] = 0
                     dictInd['objectValue'] = 0
                     listdictNeighborPop.append(dictInd)
-            if iLocalSearchNum == 10:
+            if iLocalSearchNum == self.iLocalSearchIndNumEveGen:
                 break
         # evaluate the listdictNeighborPop
         self.iNewLocalSearchedIndNumAdd = len(self.listaLocalSearchTestRepeat) - iTempLocalSearchedIndNum
@@ -277,7 +279,7 @@ class LS:
         print("Strong")
         listdictNeighborPop = []
         # 强local search
-        for i in range(10):  # Do local search process for the best 10 individuals
+        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
@@ -289,6 +291,34 @@ class LS:
                 self.listaLocalSearchTestRepeat.append(fp_listdictCurrPop[i]['chromosome'])
             for j in range(self.iIndLen):
                 dictInd = copy.deepcopy(fp_listdictCurrPop[i])
+                dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
+                dictInd['fitness'] = 0
+                dictInd['objectValue'] = 0
+                listdictNeighborPop.append(dictInd)
+        # evaluate the listdictNeighborPop
+        print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
+        listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
+
+        return listdictNeighborPopAfEva
+
+    def funInitPopLocalSearch(self, fp_listdictInitPop):
+        '''
+        Use local search to the best 10 individuals
+        '''
+        print("Initial LS")
+        listdictNeighborPop = []
+        for i in range(len(fp_listdictInitPop)):  # Do local search process for the all initial individuals
+            # 检查个体i在前面有没有被搜索过
+            boolNotSearched = True
+            for t in range(len(self.listaLocalSearchTestRepeat)):
+                iHammingDist = np.count_nonzero(fp_listdictInitPop[i]['chromosome'] != self.listaLocalSearchTestRepeat[t])
+                if iHammingDist == 0:
+                    boolNotSearched = False
+                    break
+            if boolNotSearched:
+                self.listaLocalSearchTestRepeat.append(fp_listdictInitPop[i]['chromosome'])
+            for j in range(self.iIndLen):
+                dictInd = copy.deepcopy(fp_listdictInitPop[i])
                 dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
                 dictInd['fitness'] = 0
                 dictInd['objectValue'] = 0
@@ -444,6 +474,10 @@ class LS:
         listfOnlyCurrNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[3])
         listfProportion_belongToNeighborOfLocalSearchedInd.append(tupleDiversityMetrics[4])
         listdictCurrPop = copy.deepcopy(listdictInitPop)
+
+        # listdictCurrPop.extend(self.funInitPopLocalSearch(listdictCurrPop))
+        # listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
+
         # record the fitness of the best individual for every generation
         listfBestIndFitness = []
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
@@ -452,11 +486,20 @@ class LS:
         for gen in range(self.iGenNum):
             print("Gen:", gen)
             listdictCurrPop = self.funSurvival(listdictCurrPop)
+            print("self.iPopSize:", self.iPopSize)
+            print("Actual PopSize:", len(listdictCurrPop))
+
             listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
             tupleDiversityMetrics = self.funMeasurePopDiversity(listdictCurrPop)
             listiDiversityMetric1.append(tupleDiversityMetrics[0])
             listiDiversityMetric2.append(tupleDiversityMetrics[1])
             listfHistoryNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[2])
+
+            if tupleDiversityMetrics[2] > 0.8:
+                self.iPopSize *= 2
+            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
+                self.iLocalSearchIndNumEveGen *= 2
+
             listfOnlyCurrNeighborProportionOf10IndEveGen.append(tupleDiversityMetrics[3])
             listfProportion_belongToNeighborOfLocalSearchedInd.append(tupleDiversityMetrics[4])
             listiFitEvaNumByThisGen.append(self.iTotalFitEvaNum)
@@ -473,7 +516,7 @@ class LS:
 
         # 检查初始种群有多少在已进行LS的个体的邻域内
         iInitIndInSearchedNeighborNum = 0
-        for i in range(self.iPopSize):
+        for i in range(len(listdictInitPop)):
             for j in range(len(self.listaLocalSearchTestRepeat)):
                 iHammingDist = np.count_nonzero(listdictInitPop[i]['chromosome'] != self.listaLocalSearchTestRepeat[j])
                 if iHammingDist <= 1:

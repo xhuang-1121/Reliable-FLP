@@ -4,7 +4,9 @@ from multiprocessing import Pool
 import itertools
 import GA
 import GA_DM
-import GA_LS_DM
+import GA_LS_DM  # strong local search和weak local search 都在里面
+import GAMLS1_DM
+import GAMLS2_DM
 import GAwithLocalSearch
 import usecplex
 import pickle
@@ -21,14 +23,14 @@ iActualInsNum = 1
 iInsNum = 8
 iRunsNum = 4
 fAlpha = 1.0
-iCandidateFaciNum = 50
-insName = '50-nodeInstances'
-fileName = 'ex50-node'
+iCandidateFaciNum = 100
+insName = '100-nodeInstances'
+fileName = 'ex100-node'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
-iGenNum = 200
+iGenNum = 50
 iPopSize = 50
 fCrosRate = 0.9
 fMutRate = 0.1
@@ -541,6 +543,187 @@ def funGA_LS_DM():
     # np.savetxt("100-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
     excelName = fileName + '_GALSDM_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
+
+
+def funGAMLS1_DM_ex():
+    listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
+    listAllRunsSumFitEvaNumByThisGen = np.zeros((iGenNum + 1,)).tolist()
+    a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
+    f = open(insName, 'rb')
+    listIns = []
+    fig = plt.figure()
+    for i in range(iInsNum):  # 8 instances
+        ins = pickle.load(f)
+        listIns.append(ins)
+    for i in range(iActualInsNum):
+        # genetic algorithm
+        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric1 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric2 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiFitEvaNumByThisGen_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        for j in range(iRunsNum):  # Every instance has 10 runs experiments.
+            print("Begin: ins " + str(i) + ", Runs " + str(j))
+            print("Running......")
+            cpuStart = time.process_time()
+            # 调用GADM求解
+            local_state = np.random.RandomState()
+            GeneticAlgo = GAMLS1_DM.GA(listGAParameters, listIns[3], local_state)
+            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfHistoryNeighborProportionOf10IndEveGen, listfOnlyCurrNeighborProportionOf10IndEveGen, listfProportion_belongToNeighborOfLocalSearchedInd = GeneticAlgo.funGA_main()
+            cpuEnd = time.process_time()
+            # 记录CPU time，累加
+            listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
+            # 记录最终种群中最好个体的fitness和目标函数值，累加
+            print("Objective value:", listdictFinalPop[0]['objectValue'])
+            if listfBestIndFitnessEveGen[-1] != 1/listdictFinalPop[0]['objectValue']:
+                print("Wrong. Please check funGA_LS_DM().")
+            a_2d_fEveInsEveRunObjValue[i][j] = listdictFinalPop[0]['objectValue']
+            listfAveFitnessEveryIns[i] += listfBestIndFitnessEveGen[-1]
+            listfAveObjValueEveryIns[i] += listdictFinalPop[0]['objectValue']
+            # 为绘图准备
+            new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
+            for g in range(len(listGenNum)):
+                listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
+                listiAllDiffGenDiversityMetric1[g] += listiDiversityMetric1[g]
+                listiAllDiffGenDiversityMetric2[g] += listiDiversityMetric2[g]
+                listiFitEvaNumByThisGen_AllRunsAve[g] += listiFitEvaNumByThisGen[g]
+                listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve[g] += listfHistoryNeighborProportionOf10IndEveGen[g]
+                listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve[g] += listfProportion_belongToNeighborOfLocalSearchedInd[g]
+
+        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        # 平均每次运行的时间
+        listfAveCPUTimeEveryIns[i] /= iRunsNum
+        # 平均fitness和目标函数值
+        listfAveFitnessEveryIns[i] /= iRunsNum
+        listfAveObjValueEveryIns[i] /= iRunsNum
+        # 绘图
+        listfAveBestIndFitnessEveryGen = [fitness / iRunsNum for fitness in listfAllDiffGenBestIndFitness]
+        listiAveDiversityMetric1EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric1]
+        listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric2]
+        listiFitEvaNumByThisGen_AllRunsAve = [diversity / iRunsNum for diversity in listiFitEvaNumByThisGen_AllRunsAve]
+        listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve = [diversity / iRunsNum for diversity in listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve]
+        listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve = [diversity / iRunsNum for diversity in listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve]
+
+        ax1 = fig.add_subplot(111)
+        l1, = ax1.plot(listGenNum, listfAveBestIndFitnessEveryGen, marker='*')
+        ax1.set_xlabel("# of Generation")
+        ax1.set_ylabel("Fitness Of Best Individual")
+        # 右方Y轴
+        ax2 = ax1.twinx()  # 与ax1共用1个x轴，在右方生成自己的y轴
+        l2, = ax2.plot(listGenNum, listiAveDiversityMetric1EveGen, 'r')
+        l3, = ax2.plot(listGenNum, listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve, 'purple', marker='p', linestyle='--')
+        l4, = ax2.plot(listGenNum, listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve, 'darkslategray', linestyle='-.')
+        ax2.set_ylabel("Diversity Metric")
+        # 上方X轴
+        ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
+        ax3.set_xlabel("# of Fitness Evaluation")
+        listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
+        listFeXCoordinate = []
+        for i in range(len(listfFeIndex)):
+            listFeXCoordinate.append(listiFitEvaNumByThisGen[int(listfFeIndex[i])])
+        ax3.plot(listGenNum, listfAveBestIndFitnessEveryGen, '--')
+        ax3.set_xticks(listfFeIndex)
+        ax3.set_xticklabels(listFeXCoordinate)
+        plt.show()
+        print("Average Objective value:", 1/listfAveBestIndFitnessEveryGen[-1])
+        print("Average Objective value:", listfAveObjValueEveryIns)
+
+
+def funGAMLS2_DM_ex():
+    listfAveFitnessEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
+    listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
+    listAllRunsSumFitEvaNumByThisGen = np.zeros((iGenNum + 1,)).tolist()
+    a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
+    f = open(insName, 'rb')
+    listIns = []
+    fig = plt.figure()
+    for i in range(iInsNum):  # 8 instances
+        ins = pickle.load(f)
+        listIns.append(ins)
+    for i in range(iActualInsNum):
+        # genetic algorithm
+        listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric1 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiAllDiffGenDiversityMetric2 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
+        listiFitEvaNumByThisGen_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        for j in range(iRunsNum):  # Every instance has 10 runs experiments.
+            print("Begin: ins " + str(i) + ", Runs " + str(j))
+            print("Running......")
+            cpuStart = time.process_time()
+            # 调用GADM求解
+            local_state = np.random.RandomState()
+            GeneticAlgo = GAMLS2_DM.LS(listGAParameters, listIns[3], local_state)
+            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfHistoryNeighborProportionOf10IndEveGen, listfOnlyCurrNeighborProportionOf10IndEveGen, listfProportion_belongToNeighborOfLocalSearchedInd = GeneticAlgo.funGA_main()
+            cpuEnd = time.process_time()
+            # 记录CPU time，累加
+            listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
+            # 记录最终种群中最好个体的fitness和目标函数值，累加
+            print("Objective value:", listdictFinalPop[0]['objectValue'])
+            if listfBestIndFitnessEveGen[-1] != 1/listdictFinalPop[0]['objectValue']:
+                print("Wrong. Please check funLS_DM().")
+            a_2d_fEveInsEveRunObjValue[i][j] = listdictFinalPop[0]['objectValue']
+            listfAveFitnessEveryIns[i] += listfBestIndFitnessEveGen[-1]
+            listfAveObjValueEveryIns[i] += listdictFinalPop[0]['objectValue']
+            # 为绘图准备
+            new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
+            for g in range(len(listGenNum)):
+                listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
+                listiAllDiffGenDiversityMetric1[g] += listiDiversityMetric1[g]
+                listiAllDiffGenDiversityMetric2[g] += listiDiversityMetric2[g]
+                listiFitEvaNumByThisGen_AllRunsAve[g] += listiFitEvaNumByThisGen[g]
+                listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve[g] += listfHistoryNeighborProportionOf10IndEveGen[g]
+                listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve[g] += listfProportion_belongToNeighborOfLocalSearchedInd[g]
+
+        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        # 平均每次运行的时间
+        listfAveCPUTimeEveryIns[i] /= iRunsNum
+        # 平均fitness和目标函数值
+        listfAveFitnessEveryIns[i] /= iRunsNum
+        listfAveObjValueEveryIns[i] /= iRunsNum
+        # 绘图
+        listfAveBestIndFitnessEveryGen = [fitness / iRunsNum for fitness in listfAllDiffGenBestIndFitness]
+        listiAveDiversityMetric1EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric1]
+        listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listiAllDiffGenDiversityMetric2]
+        listiFitEvaNumByThisGen_AllRunsAve = [diversity / iRunsNum for diversity in listiFitEvaNumByThisGen_AllRunsAve]
+        listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve = [diversity / iRunsNum for diversity in listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve]
+        listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve = [diversity / iRunsNum for diversity in listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve]
+
+        # fMax = np.max(listiAveDiversityMetric2EveGen)
+        # fMin = np.min(listiAveDiversityMetric2EveGen)
+        # for i in range(len(listiAveDiversityMetric2EveGen)):
+        #     listiAveDiversityMetric2EveGen[i] = float(listiAveDiversityMetric2EveGen[i] - fMin)/(fMax - fMin)
+        #     # listiAveDiversityMetric2EveGen[i] /= fMax
+
+        ax1 = fig.add_subplot(111)
+        l1, = ax1.plot(listGenNum, listfAveBestIndFitnessEveryGen, marker='*')
+        ax1.set_xlabel("# of Generation")
+        ax1.set_ylabel("Fitness Of Best Individual")
+        # 右方Y轴
+        ax2 = ax1.twinx()  # 与ax1共用1个x轴，在右方生成自己的y轴
+        l2, = ax2.plot(listGenNum, listiAveDiversityMetric1EveGen, 'r',)
+        # l5, = ax2.plot(listGenNum, listiAveDiversityMetric2EveGen, 'go:')
+        l3, = ax2.plot(listGenNum, listfHistoryNeighborProportionOf10IndEveGen_AllRunsAve, 'purple', marker='p', linestyle='--')
+        # l4, = ax2.plot(listGenNum, listfProportion_belongToNeighborOfLocalSearchedInd_AllRunsAve, 'darkslategray', linestyle='-.')
+        ax2.set_ylabel("Diversity Metric")
+        # 上方X轴
+        ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
+        ax3.set_xlabel("# of Fitness Evaluation")
+        listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
+        listFeXCoordinate = []
+        for i in range(len(listfFeIndex)):
+            listFeXCoordinate.append(listiFitEvaNumByThisGen[int(listfFeIndex[i])])
+        ax3.plot(listGenNum, listfAveBestIndFitnessEveryGen, '--')
+        ax3.set_xticks(listfFeIndex)
+        ax3.set_xticklabels(listFeXCoordinate)
+        plt.show()
+        print("Average Objective value:", 1/listfAveBestIndFitnessEveryGen[-1])
+        print("Average Objective value:", listfAveObjValueEveryIns)
 
 
 def funGA():
@@ -1147,4 +1330,6 @@ if __name__ == '__main__':
     # funGA_DM()
     # funGA_LS_DM()
     # funGA_DM_parallel()
-    funGA_LS_DM_parallel()
+    # funGA_LS_DM_parallel()
+    funGAMLS1_DM_ex()
+    # funGAMLS2_DM_ex()
