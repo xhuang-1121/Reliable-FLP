@@ -34,6 +34,7 @@ class GA:
         self.fAlpha = listGAParameters[5]
         self.boolAllo2Faci = listGAParameters[6]
         self.listaLocalSearchTestRepeat = []
+        self.listiEveGenLocalSearchedIndNum = []
         self.iTotalFitEvaNum = 0
         self.iNewLocalSearchedIndNumAdd = 0
         self.iLocalSearchIndNumEveGen = 10
@@ -152,9 +153,9 @@ class GA:
         fp_listdictCurrPop.extend(listdictNeighborPopAfEva)
         # 降序排列
         fp_listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)
+        print("len(fp_listdictCurrPop):", len(fp_listdictCurrPop))
         # only the first μ can survive
         fp_listdictCurrPop = fp_listdictCurrPop[:self.iPopSize]
-        print()
         return fp_listdictCurrPop
 
     def funLocalNeighborhood(self, fp_listdictCurrPop):
@@ -267,7 +268,8 @@ class GA:
                 break
         # evaluate the listdictNeighborPop
         self.iNewLocalSearchedIndNumAdd = len(self.listaLocalSearchTestRepeat) - iTempLocalSearchedIndNum
-        print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
+        self.listiEveGenLocalSearchedIndNum.append(len(self.listaLocalSearchTestRepeat))
+        print("局部搜索过的个体数量:", self.listiEveGenLocalSearchedIndNum[-1])
         listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
 
         return listdictNeighborPopAfEva
@@ -430,6 +432,7 @@ class GA:
         # listdictCurrPop.extend(self.funInitPopLocalSearch(listdictCurrPop))  # 对初始种群的全部个体都做一次局部搜索
         # listdictCurrPop.sort(key=itemgetter('fitness'), reverse=True)  # 将初始种群排序
 
+        self.listiEveGenLocalSearchedIndNum.append(len(self.listaLocalSearchTestRepeat))
         # record the fitness of the best individual for every generation
         listfBestIndFitness = []
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
@@ -447,11 +450,11 @@ class GA:
             listiDiversityMetric2.append(tupleDiversityMetrics[1])
             listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd.append(tupleDiversityMetrics[2])
 
-            # # 种群规模自适应
-            # if tupleDiversityMetrics[2] > 0.8:
-            #     self.iPopSize *= 2
-            # if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
-            #     self.iLocalSearchIndNumEveGen *= 2
+            # 种群规模自适应
+            if tupleDiversityMetrics[2] > 0.8:
+                self.iPopSize += 100
+            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
+                self.iLocalSearchIndNumEveGen += 10
 
             listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor.append(tupleDiversityMetrics[3])
             listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd.append(tupleDiversityMetrics[4])
@@ -477,7 +480,7 @@ class GA:
                     break
         print("iInitIndInSearchedNeighborNum:", iInitIndInSearchedNeighborNum)
 
-        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd
+        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd, self.listiEveGenLocalSearchedIndNum
 
 
 if __name__ == '__main__':
@@ -506,7 +509,7 @@ if __name__ == '__main__':
     obInstance.funGenerateInstances()
     # genetic algorithm
     geneticAlgo = GA(listGAParameters, obInstance, local_state)
-    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfHistoryNeighborProportionOf10IndEveGen, listfOnlyCurrNeighborProportionOf10IndEveGen, listfProportion_belongToNeighborOfLocalSearchedInd = geneticAlgo.funGA_main()
+    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfHistoryNeighborProportionOf10IndEveGen, listfOnlyCurrNeighborProportionOf10IndEveGen, listfProportion_belongToNeighborOfLocalSearchedInd, listiEveGenLocalSearchedIndNum = geneticAlgo.funGA_main()
     end = time.process_time()
 
     fMax = np.max(listiDiversityMetric2)

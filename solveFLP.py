@@ -22,10 +22,10 @@ import LR2
 seed = range(10)  # 用于并行程序设置不同的随机种子
 iActualInsNum = 1
 iInsNum = 8
-iRunsNum = 1
+iRunsNum = 8
 fAlpha = 1.0
-iCandidateFaciNum = 50
-insName = '50-nodeInstances'
+iCandidateFaciNum = 100
+insName = '100-nodeInstances'
 fileName = 'ex50-node'
 
 '''
@@ -455,14 +455,14 @@ def funGAMLS1_DM_single(fp_tuple_combOfInsRuns):
     # 调用GADM求解
     GeneticAlgo = GAMLS1_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
 
-    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd = GeneticAlgo.funGA_main()
+    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd, listiEveGenLocalSearchedIndNum = GeneticAlgo.funGA_main()
 
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
     print("End")
     # 为绘图准备
     new_listfBestIndFitnessEveGen = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
-    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd
+    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listiEveGenLocalSearchedIndNum
 
 
 def funGAMLS1_DM_parallel():
@@ -495,6 +495,7 @@ def funGAMLS1_DM_parallel():
         listAllRunsAveDiversityMetric2EveGen = np.zeros((iGenNum + 1,)).tolist()
         listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum = np.zeros((iGenNum + 1,)).tolist()
         listAllRunsSumFitEvaNumByThisGen = np.zeros((iGenNum + 1,)).tolist()
+        listiEveGenLocalSearchedIndNum_AllRunsSum = np.zeros((iGenNum+1,)).tolist()
         for j in range(iRunsNum):
             # 记录CPU time，累加
             listfAveCPUTimeEveryIns[i] += listtuple_expeResult[i * iRunsNum + j][0]
@@ -507,6 +508,7 @@ def funGAMLS1_DM_parallel():
             listiOneRunDiversityMetric2EveGen = listtuple_expeResult[i * iRunsNum + j][5]
             listiOneRunFitEvaNumByThisGen = listtuple_expeResult[i*iRunsNum+j][6]
             listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_oneRun = listtuple_expeResult[i*iRunsNum+j][7]
+            listiEveGenLocalSearchedIndNum_oneRun = listtuple_expeResult[i*iRunsNum+j][8]
 
             for g in range(len(new_listfOneRunBestIndFitnessEveGen)):
                 listfEveGenBestIndFitness_AllRunsSum[g] += new_listfOneRunBestIndFitnessEveGen[g]
@@ -514,6 +516,7 @@ def funGAMLS1_DM_parallel():
                 listAllRunsAveDiversityMetric2EveGen[g] += listiOneRunDiversityMetric2EveGen[g]
                 listAllRunsSumFitEvaNumByThisGen[g] += listiOneRunFitEvaNumByThisGen[g]
                 listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum[g] += listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_oneRun[g]
+                listiEveGenLocalSearchedIndNum_AllRunsSum[g] += listiEveGenLocalSearchedIndNum_oneRun[g]
             # 记录每个instance每一次run所得到的最终种群的最优个体的目标函数值
             a_2d_fEveInsEveRunObjValue[i][j] = listtuple_expeResult[i * iRunsNum + j][2]
         # 平均每次运行的时间
@@ -527,8 +530,11 @@ def funGAMLS1_DM_parallel():
         listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsAve = [diversity / iRunsNum for diversity in listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum]
         listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listAllRunsAveDiversityMetric2EveGen]
         listiAveFitEvaNumByThisGen = [int(fe / iRunsNum) for fe in listAllRunsSumFitEvaNumByThisGen]
+        listiEveGenLocalSearchedIndNum_AllRunsEve = [num / iRunsNum for num in listiEveGenLocalSearchedIndNum_AllRunsSum]
 
-        plotFile.write("listfEveGenBestIndFitness_AllRunsAve:\n")
+        plotFile.write("listiEveGenLocalSearchedIndNum_AllRunsEve:\n")
+        plotFile.write(str(listiEveGenLocalSearchedIndNum_AllRunsEve))
+        plotFile.write("\n\nlistfEveGenBestIndFitness_AllRunsAve:\n")
         plotFile.write(str(listfEveGenBestIndFitness_AllRunsAve))
         plotFile.write("\n\nlistEveGenDiversityMetric1_AllRunsAve:\n")
         plotFile.write(str(listEveGenDiversityMetric1_AllRunsAve))
@@ -675,14 +681,14 @@ def funGAMLS2_DM_single(fp_tuple_combOfInsRuns):
     # 调用GADM求解
     GeneticAlgo = GAMLS2_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
 
-    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd = GeneticAlgo.funGA_main()
+    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd, listiEveGenLocalSearchedIndNum = GeneticAlgo.funGA_main()
 
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
     print("End")
     # 为绘图准备
     new_listfBestIndFitnessEveGen = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
-    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd
+    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listiEveGenLocalSearchedIndNum
 
 
 def funGAMLS2_DM_parallel():
@@ -715,6 +721,7 @@ def funGAMLS2_DM_parallel():
         listAllRunsAveDiversityMetric2EveGen = np.zeros((iGenNum + 1,)).tolist()
         listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum = np.zeros((iGenNum + 1,)).tolist()
         listAllRunsSumFitEvaNumByThisGen = np.zeros((iGenNum + 1,)).tolist()
+        listiEveGenLocalSearchedIndNum_AllRunsSum = np.zeros((iGenNum+1,)).tolist()
         for j in range(iRunsNum):
             # 记录CPU time，累加
             listfAveCPUTimeEveryIns[i] += listtuple_expeResult[i * iRunsNum + j][0]
@@ -727,6 +734,7 @@ def funGAMLS2_DM_parallel():
             listiOneRunDiversityMetric2EveGen = listtuple_expeResult[i * iRunsNum + j][5]
             listiOneRunFitEvaNumByThisGen = listtuple_expeResult[i*iRunsNum+j][6]
             listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_oneRun = listtuple_expeResult[i*iRunsNum+j][7]
+            listiEveGenLocalSearchedIndNum_oneRun = listtuple_expeResult[i*iRunsNum+j][8]
 
             for g in range(len(new_listfOneRunBestIndFitnessEveGen)):
                 listfEveGenBestIndFitness_AllRunsSum[g] += new_listfOneRunBestIndFitnessEveGen[g]
@@ -734,6 +742,7 @@ def funGAMLS2_DM_parallel():
                 listAllRunsAveDiversityMetric2EveGen[g] += listiOneRunDiversityMetric2EveGen[g]
                 listAllRunsSumFitEvaNumByThisGen[g] += listiOneRunFitEvaNumByThisGen[g]
                 listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum[g] += listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_oneRun[g]
+                listiEveGenLocalSearchedIndNum_AllRunsSum[g] += listiEveGenLocalSearchedIndNum_oneRun[g]
             # 记录每个instance每一次run所得到的最终种群的最优个体的目标函数值
             a_2d_fEveInsEveRunObjValue[i][j] = listtuple_expeResult[i * iRunsNum + j][2]
         # 平均每次运行的时间
@@ -747,8 +756,11 @@ def funGAMLS2_DM_parallel():
         listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsAve = [diversity / iRunsNum for diversity in listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsSum]
         listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listAllRunsAveDiversityMetric2EveGen]
         listiAveFitEvaNumByThisGen = [int(fe / iRunsNum) for fe in listAllRunsSumFitEvaNumByThisGen]
+        listiEveGenLocalSearchedIndNum_AllRunsEve = [num / iRunsNum for num in listiEveGenLocalSearchedIndNum_AllRunsSum]
 
-        plotFile.write("listfEveGenBestIndFitness_AllRunsAve:\n")
+        plotFile.write("listiEveGenLocalSearchedIndNum_AllRunsEve:\n")
+        plotFile.write(str(listiEveGenLocalSearchedIndNum_AllRunsEve))
+        plotFile.write("\n\nlistfEveGenBestIndFitness_AllRunsAve:\n")
         plotFile.write(str(listfEveGenBestIndFitness_AllRunsAve))
         plotFile.write("\n\nlistEveGenDiversityMetric1_AllRunsAve:\n")
         plotFile.write(str(listEveGenDiversityMetric1_AllRunsAve))
@@ -1495,5 +1507,5 @@ if __name__ == '__main__':
     # funGA_LS_DM_parallel()
     # funGAMLS1_DM_ex()
     # funGAMLS2_DM_ex()
-    funGAMLS1_DM_parallel()
-    # funGAMLS2_DM_parallel()
+    # funGAMLS1_DM_parallel()
+    funGAMLS2_DM_parallel()
