@@ -253,36 +253,36 @@ if __name__ == '__main__':
     # print(sol)  # 获取所有的变量解
     print('-------------------------------------------------------------------')
     # ------------------------docplex-mp module, m=sumXj--------------------
-    cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
-    cplexSolver.model.parameters.mip.tolerances.mipgap = 0.0001  # 控制gap/tolerance, 0.1即10%
-    # cplexSolver.model.set_time_limit(0.01)  # 控制时间
-    print('Time limit for mp: ', cplexSolver.model.get_time_limit())
-    sol = cplexSolver.model.solve()
-    print("Objective value: ", sol.get_objective_value())
-    print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
-    cplexSolver.model.print_information()
-    for i in range(cplexSolver.iCandidateFaciNum):
-        if sol.get_value('X_'+str(i)) == 1:
-            print('X_'+str(i)+" =", 1)
-    iAlloNum = 0
-    for i in range(cplexSolver.iCandidateFaciNum):
-        for j in range(cplexSolver.iCandidateFaciNum):
-            for r in range(cplexSolver.iCandidateFaciNum):
-                if sol.get_value('Y_'+str(pow(cplexSolver.iCandidateFaciNum, 2) * i + cplexSolver.iCandidateFaciNum * j + r)) == 1:
-                    iAlloNum += 1
-                    # print('Y_'+str(pow(cplexSolver.iCandidateFaciNum, 2) * i + cplexSolver.iCandidateFaciNum * j + r)+" =", 1)
-    print("iAlloNum:", iAlloNum)
+    # cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
+    # cplexSolver.model.parameters.mip.tolerances.mipgap = 0.0001  # 控制gap/tolerance, 0.1即10%
+    # # cplexSolver.model.set_time_limit(0.01)  # 控制时间
+    # print('Time limit for mp: ', cplexSolver.model.get_time_limit())
+    # sol = cplexSolver.model.solve()
+    # print("Objective value: ", sol.get_objective_value())
+    # print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    # cplexSolver.model.print_information()
+    # for i in range(cplexSolver.iCandidateFaciNum):
+    #     if sol.get_value('X_'+str(i)) == 1:
+    #         print('X_'+str(i)+" =", 1)
+    # iAlloNum = 0
+    # for i in range(cplexSolver.iCandidateFaciNum):
+    #     for j in range(cplexSolver.iCandidateFaciNum):
+    #         for r in range(cplexSolver.iCandidateFaciNum):
+    #             if sol.get_value('Y_'+str(pow(cplexSolver.iCandidateFaciNum, 2) * i + cplexSolver.iCandidateFaciNum * j + r)) == 1:
+    #                 iAlloNum += 1
+    #                 # print('Y_'+str(pow(cplexSolver.iCandidateFaciNum, 2) * i + cplexSolver.iCandidateFaciNum * j + r)+" =", 1)
+    # print("iAlloNum:", iAlloNum)
 
-    # print(sol)  # 获取所有的变量解
+    # # print(sol)  # 获取所有的变量解
     print('-------------------------------------------------------------------')
     # -----------------------docplex-cp module---------------------
-    # cplexSolver.fun_fillCpoModel()
-    # # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
-    # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.002)
-    # print("Solution status: " + cpsol.get_solve_status())
+    cplexSolver.fun_fillCpoModel()
+    # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
+    cpsol = cplexSolver.cpomodel.solve()
+    print("Solution status: " + cpsol.get_solve_status())
 
-    # for i in range(cplexSolver.iCandidateFaciNum):
-    #     if cpsol.get_all_var_solutions()[i].get_value() == 1:
-    #         print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
-    # print(cpsol)
-    # print(type(sol))
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if cpsol.get_all_var_solutions()[i].get_value() == 1:
+            print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
+    print(cpsol)
+    # print(type(cpsol))

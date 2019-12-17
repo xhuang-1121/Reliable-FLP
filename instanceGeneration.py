@@ -49,9 +49,9 @@ if __name__ == '__main__':
     0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb
     '''
     iInsNum = 8
-    iSitesNum = 200
+    iSitesNum = 600
     listPara = [iSitesNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
-    f = open('200-nodeInstances', 'wb')
+    f = open('600-nodeInstances', 'wb')
     for i in range(iInsNum):
         generateInstances = Instances(listPara)
         generateInstances.funGenerateInstances()

@@ -1,9 +1,0 @@
-Average CPU time of 20 runs for each instance:
-[1830.9904279326497, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-Average fitness of 20 runs for each instance:
-[7.525503563677476e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-Average objective value of 20 runs for each instance:
-[13288.147318494277, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
------------------------------------------------------

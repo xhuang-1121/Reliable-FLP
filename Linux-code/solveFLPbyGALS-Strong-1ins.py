@@ -19,7 +19,7 @@ import LR2
 # Global variables
 iActualInsNum = 1
 iInsNum = 8
-iRunsNum = 10
+iRunsNum = 1
 fAlpha = 1.0
 iCandidateFaciNum = 100
 insName = '100-nodeInstances'
@@ -28,8 +28,8 @@ fileName = '100-node'
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
-iGenNum = 100
-iPopSize = 200
+iGenNum = 40
+iPopSize = 20
 fCrosRate = 0.9
 fMutRate = 0.1
 boolAllo2Faci = True
@@ -47,7 +47,6 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     workbook.save(excelName)
 
 
-
 def funGA_LS_DM_single(fp_tuple_combOfInsRuns):
     local_state = np.random.RandomState()
     print("Begin:")
@@ -55,13 +54,13 @@ def funGA_LS_DM_single(fp_tuple_combOfInsRuns):
     cpuStart = time.process_time()
     # 调用GADM求解
     GeneticAlgo = GA_SLS_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
-    listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = GeneticAlgo.funGA_main()
+    listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome, listiLocalSearchedIndNumByCurrGen = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
     print("End")
     # 为绘图准备
     new_listfBestIndFitnessEveGen = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
-    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen
+    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome, listiLocalSearchedIndNumByCurrGen
 
 
 def funGA_LS_DM_parallel():
@@ -90,6 +89,7 @@ def funGA_LS_DM_parallel():
         listAllRunsAveDiversityMetric1EveGen = np.zeros((iGenNum + 1,)).tolist()
         listAllRunsAveDiversityMetric2EveGen = np.zeros((iGenNum + 1,)).tolist()
         listAllRunsSumFitEvaNumByThisGen = np.zeros((iGenNum + 1,)).tolist()
+        listAllRunsSumLocalSearchedIndNumByCurrGen = np.zeros((iGenNum + 1,)).tolist()
         for j in range(iRunsNum):
             # 记录CPU time，累加
             listfAveCPUTimeEveryIns[i] += listtuple_expeResult[i * iRunsNum + j][0]
@@ -101,13 +101,26 @@ def funGA_LS_DM_parallel():
             listiOneRunDiversityMetric1EveGen = listtuple_expeResult[i * iRunsNum + j][4]
             listiOneRunDiversityMetric2EveGen = listtuple_expeResult[i * iRunsNum + j][5]
             listiOneRunFitEvaNumByThisGen = listtuple_expeResult[i*iRunsNum+j][6]
+            listaEveGenBestIndChromosome = listtuple_expeResult[i*iRunsNum+j][7]
+            listiOneRunLocalSearchedIndNumByCurrGen = listtuple_expeResult[i*iRunsNum+j][8]
             for g in range(len(new_listfOneRunBestIndFitnessEveGen)):
                 listfAllRunsBestIndFitnessEveGen[g] += new_listfOneRunBestIndFitnessEveGen[g]
                 listAllRunsAveDiversityMetric1EveGen[g] += listiOneRunDiversityMetric1EveGen[g]
                 listAllRunsAveDiversityMetric2EveGen[g] += listiOneRunDiversityMetric2EveGen[g]
                 listAllRunsSumFitEvaNumByThisGen[g] += listiOneRunFitEvaNumByThisGen[g]
+                listAllRunsSumLocalSearchedIndNumByCurrGen[g] += listiOneRunLocalSearchedIndNumByCurrGen[g]
             # 记录每个instance每一次run所得到的最终种群的最优个体的目标函数值
             a_2d_fEveInsEveRunObjValue[i][j] = listtuple_expeResult[i * iRunsNum + j][2]
+        # 1次运行的最好个体的基因型，下面115-123行的代码只适用于一个ins运行1次
+        if (1+iGenNum) != len(listaEveGenBestIndChromosome):
+            print('Wrong. Check len(listaEveGenBestIndChromosome)')
+        dictEveGenWhichGeneEqualOne = {}
+        for g in range(1+iGenNum):
+            listOneGenWhichGeneEqualOne = []
+            for j in range(iCandidateFaciNum):
+                if(listaEveGenBestIndChromosome[g][j]) == 1:
+                    listOneGenWhichGeneEqualOne.append(j)
+            dictEveGenWhichGeneEqualOne[str(g)] = listOneGenWhichGeneEqualOne
         # 平均每次运行的时间
         listfAveCPUTimeEveryIns[i] /= iRunsNum
         # 平均fitness和目标函数值
@@ -118,6 +131,8 @@ def funGA_LS_DM_parallel():
         listiAveDiversityMetric1EveGen = [diversity / iRunsNum for diversity in listAllRunsAveDiversityMetric1EveGen]
         listiAveDiversityMetric2EveGen = [diversity / iRunsNum for diversity in listAllRunsAveDiversityMetric2EveGen]
         listiAveFitEvaNumByThisGen = [int(fe / iRunsNum) for fe in listAllRunsSumFitEvaNumByThisGen]
+        listAllRunsEveLocalSearchedIndNumByCurrGen = [int(num/iRunsNum) for num in listAllRunsSumLocalSearchedIndNumByCurrGen]
+
         plotFile.write("listfAveBestIndFitnessEveryGen:\n")
         plotFile.write(str(listfAveBestIndFitnessEveryGen))
         plotFile.write("\n\nlistiAveDiversityMetric1EveGen:\n")
@@ -126,8 +141,12 @@ def funGA_LS_DM_parallel():
         plotFile.write(str(listiAveDiversityMetric2EveGen))
         plotFile.write("\n\nlistiAveFitEvaNumByThisGen:\n")
         plotFile.write(str(listiAveFitEvaNumByThisGen))
+        plotFile.write("\n\ndictEveGenWhichGeneEqualOne:\n")
+        plotFile.write(str(dictEveGenWhichGeneEqualOne))
+        plotFile.write("\n\nlistAllRunsEveLocalSearchedIndNumByCurrGen:\n")
+        plotFile.write(str(listAllRunsEveLocalSearchedIndNumByCurrGen))
         plotFile.write("\n------------------------new instance-----------------------------\n")
-        
+
         fig = plt.figure()
         listGenIndex = [g for g in range(iGenNum + 1)]
         ax1 = fig.add_subplot(111)
@@ -135,7 +154,7 @@ def funGA_LS_DM_parallel():
         # 右方Y轴
         ax2 = ax1.twinx()
         l2, = ax2.plot(listGenIndex, listiAveDiversityMetric1EveGen, 'r')
-        l3, = ax2.plot(listGenIndex, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
+        # l3, = ax2.plot(listGenIndex, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
         # 上方X轴
         ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
         ax3.set_xlabel("# of Fitness Evaluation")
@@ -150,12 +169,12 @@ def funGA_LS_DM_parallel():
         ax3.set_xticklabels(listFeXCoordinate, rotation=10)
         for label in ax3.xaxis.get_ticklabels():
             label.set_fontsize(6)
-        plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', '0-HDR', '1-HDR'], loc='best')
-        
+        plt.legend(handles=[l1, l2], labels=['Fitness curve', '0-HDR'], loc='best')
+
         ax1.set_xlabel("# of Generation")
         ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
         ax2.set_ylabel("Diversity Metric")
-        plt.savefig(fileName + '_GASLSDM_Curve(m=2)-ins'+str(i)+'.svg')
+        plt.savefig(fileName + '_GASLSDM_Curve(m=2)-ins'+str(i)+'-oneRun.svg')
 
     '''
     ax1.set_xlabel("# of Generation")

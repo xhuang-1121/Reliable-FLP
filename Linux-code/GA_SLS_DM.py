@@ -273,6 +273,16 @@ class GA:
 
         # 强local search
         for i in range(10):  # Do local search process for the best 10 individuals
+            # 检查个体i在前面有没有被搜索过
+            boolNotSearched = True
+            for t in range(len(self.listaLocalSearchTestRepeat)):
+                iHammingDist = np.count_nonzero(fp_listdictCurrPop[i]['chromosome'] != self.listaLocalSearchTestRepeat[t])
+                if iHammingDist == 0:
+                    boolNotSearched = False
+                    break
+            if boolNotSearched:
+                self.listaLocalSearchTestRepeat.append(fp_listdictCurrPop[i]['chromosome'])
+
             for j in range(self.iIndLen):
                 dictInd = copy.deepcopy(fp_listdictCurrPop[i])
                 dictInd['chromosome'][j] = (dictInd['chromosome'][j] + 1) % 2
@@ -280,6 +290,7 @@ class GA:
                 dictInd['objectValue'] = 0
                 listdictNeighborPop.append(dictInd)
         # evaluate the listdictNeighborPop
+        print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
         listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
 
         return listdictNeighborPopAfEva
@@ -379,6 +390,7 @@ class GA:
         listiDiversityMetric1 = []
         listiDiversityMetric2 = []
         listiFitEvaNumByThisGen = []
+        listiLocalSearchedIndNumByCurrGen = []
         listdictInitPop = self.funInitializePop()
         # By this time, both CurrPop and InitPop point to the same variable.
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
@@ -386,24 +398,27 @@ class GA:
         tupleDiversityMetrics = self.funMeasurePopDiversity(listdictInitPop)
         listiDiversityMetric1.append(tupleDiversityMetrics[0])
         listiDiversityMetric2.append(tupleDiversityMetrics[1])
+        listiLocalSearchedIndNumByCurrGen.append(len(self.listaLocalSearchTestRepeat))
         listdictCurrPop = copy.deepcopy(listdictInitPop)
         # record the fitness of the best individual for every generation
         listfBestIndFitness = []
+        listaEveGenBestIndChromosome = []
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
         listfBestIndFitness.append(listdictBestInd[0]['fitness'])
+        listaEveGenBestIndChromosome.append(listdictBestInd[0]['chromosome'])
         listiFitEvaNumByThisGen.append(self.iTotalFitEvaNum)
         for gen in range(self.iGenNum):
             print("Gen:", gen)
-            listdictPopAfCros = self.funCrossover(listdictCurrPop,
-                                                  self.fCrosRate)
+            listdictPopAfCros = self.funCrossover(listdictCurrPop, self.fCrosRate)
             listdictPopAfMuta = self.funMutation(listdictPopAfCros)
-            listdictCurrPop = self.funSurvival(listdictCurrPop,
-                                               listdictPopAfMuta)
+            listdictCurrPop = self.funSurvival(listdictCurrPop, listdictPopAfMuta)
             listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
+            listaEveGenBestIndChromosome.append(listdictCurrPop[0]['chromosome'])
             tupleDiversityMetrics = self.funMeasurePopDiversity(listdictCurrPop)
             listiDiversityMetric1.append(tupleDiversityMetrics[0])
             listiDiversityMetric2.append(tupleDiversityMetrics[1])
             listiFitEvaNumByThisGen.append(self.iTotalFitEvaNum)
+            listiLocalSearchedIndNumByCurrGen.append(len(self.listaLocalSearchTestRepeat))
         listdictFinalPop = listdictCurrPop
         # tupleFinalPopDiversityMetric = self.funMeasurePopDiversity(listdictFinalPop)
         # print("listiIndNumEveGroup:")
@@ -414,7 +429,7 @@ class GA:
         # plt.xlabel("# of Generation")
         # plt.ylabel("Diversity Metric")
         # plt.savefig("line.jpg")
-        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen
+        return listdictFinalPop, listGenIndex, listfBestIndFitness, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome, listiLocalSearchedIndNumByCurrGen
 
 
 if __name__ == '__main__':
@@ -442,8 +457,19 @@ if __name__ == '__main__':
     obInstance.funGenerateInstances()
     # genetic algorithm
     geneticAlgo = GA(listGAParameters, obInstance)
-    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = geneticAlgo.funGA_main()
+    listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome = geneticAlgo.funGA_main()
     end = time.process_time()
+
+    if (1+iGenNum) != len(listaEveGenBestIndChromosome):
+        print('Wrong. Check len(listaEveGenBestIndChromosome)')
+    dictEveGenWhichGeneEqualOne = {}
+    for i in range(1+iGenNum):
+        listOneGenWhichGeneEqualOne = []
+        for j in range(iCandidateFaciNum):
+            if(listaEveGenBestIndChromosome[i][j]) == 1:
+                listOneGenWhichGeneEqualOne.append(j)
+        dictEveGenWhichGeneEqualOne[str(i)] = listOneGenWhichGeneEqualOne
+    print(dictEveGenWhichGeneEqualOne)
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)

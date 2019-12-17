@@ -55,13 +55,13 @@ def funGA_LS_DM_single(fp_tuple_combOfInsRuns):
     cpuStart = time.process_time()
     # 调用GADM求解
     GeneticAlgo = GA_SLS_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
-    listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = GeneticAlgo.funGA_main()
+    listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome, listiLocalSearchedIndNumByCurrGen = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
     print("End")
     # 为绘图准备
     new_listfBestIndFitnessEveGen = [fitness * 1000 for fitness in listfBestIndFitnessEveGen]
-    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen
+    return cpuTime, listfBestIndFitnessEveGen[-1], listdictFinalPop[0]['objectValue'], new_listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listaEveGenBestIndChromosome, listiLocalSearchedIndNumByCurrGen
 
 
 def funGA_LS_DM_parallel():

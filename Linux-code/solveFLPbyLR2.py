@@ -14,20 +14,20 @@ import LR1
 import LR2
 
 # Global variables
+iActualInsNum = 8
 iInsNum = 8
-iRunsNum = 10
 fAlpha = 1.0
-iCandidateFaciNum = 500
-insName = '500-nodeInstances'
+iCandidateFaciNum = 600
+insName = '600-nodeInstances'
 
 
 def funLR2_single(fp_obInstance):
-    print("Begin: Ins ")
+    print("Begin: 600nodes Ins ")
     print("Running......")
     iMaxIterationNum = 600
     fBeta = 2.0
     fBetaMin = 1e-8
-    fToleranceEpsilon = 0.0001
+    fToleranceEpsilon = 0.001
     boolAllo2Faci = True
     listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci]
     cpu_start = time.process_time()
@@ -47,8 +47,8 @@ def funLR2_parallel():
     listfLBEveIns = []
     listfCPUTimeEveIns = []
     f = open(insName, 'rb')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/500-node_LR2(m=2).txt', 'a')
-    textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/500-node_LR2(m=all).txt', 'a')
+    textFile = open('600-node_LR2(m=2).txt', 'a')
+    # textFile = open('600-node_LR2(m=all).txt', 'a')
     list_ins = []
     for i in range(iInsNum):
         ins = pickle.load(f)
@@ -57,7 +57,7 @@ def funLR2_parallel():
     listtuple_expeResult = pool.map(funLR2_single, list_ins)
     pool.close()
     pool.join()
-    for i in range(iInsNum):
+    for i in range(iActualInsNum):
         listfUBEveIns.append(listtuple_expeResult[i][0])
         listfLBEveIns.append(listtuple_expeResult[i][1])
         listfCPUTimeEveIns.appen(listtuple_expeResult[i][2])

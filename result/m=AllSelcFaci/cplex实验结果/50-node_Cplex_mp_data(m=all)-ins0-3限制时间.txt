@@ -1,0 +1,14 @@
+
+Every instance's objective value got by Cplex-mp method:
+[12589.41306118 15734.80203515 12656.1301728  12147.92303339
+     0.             0.             0.             0.        ]
+
+Every instance's CPU time used by Cplex-mp method:
+[4715.555060473, 4488.263713181001, 5219.3266185229995, 4702.0051303870005]
+
+Every instance's objective value got by Cplex-mp method:
+[12589.41306118 15734.80203515 12656.1301728  12147.92303339
+     0.             0.             0.             0.        ]
+
+Every instance's CPU time used by Cplex-mp method:
+[296.412414887, 188.987151733, 1023.786601177, 383.734676868]
