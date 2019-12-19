@@ -20,13 +20,13 @@ import LR2
 
 # Global variables
 seed = range(10)  # 用于并行程序设置不同的随机种子
-iActualInsNum = 1
+iActualInsNum = 8
 iInsNum = 8
 iRunsNum = 8
 fAlpha = 1.0
-iCandidateFaciNum = 100
-insName = '100-nodeInstances'
-fileName = 'ex50-node'
+iCandidateFaciNum = 30
+insName = '30-nodeInstances'
+fileName = 'ex30-node'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
@@ -1391,9 +1391,9 @@ def funCplex_cp_ex():
         cpu_start = time.process_time()
         cplexSolver = usecplex.CPLEX(listCplexParameters, ins)
         cplexSolver.fun_fillCpoModel()
-        cpsol = cplexSolver.cpomodel.solve()
+        # cpsol = cplexSolver.cpomodel.solve()
         # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.16)
-        # cpsol = cplexSolver.cpomodel.solve(TimeLimit=1870, TimeMode='CPUTime')
+        cpsol = cplexSolver.cpomodel.solve(TimeLimit=10, TimeMode='CPUTime')
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
@@ -1407,7 +1407,7 @@ def funCplex_cp_ex():
 
 
 def funLR2():
-    iMaxIterationNum = 600
+    iMaxIterationNum = 60
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
@@ -1416,8 +1416,8 @@ def funLR2():
     listfUBEveIns = []
     listfLBEveIns = []
     f = open(insName, 'rb')
-    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\100-node_LR2(m=2).txt', 'a')
-    for i in range(iInsNum):
+    textFile = open('ex10-node_LR2(m=2).txt', 'a')
+    for i in range(iActualInsNum):
         print("Begin: Ins " + str(i))
         print("Running......")
         ins = pickle.load(f)
@@ -1508,4 +1508,5 @@ if __name__ == '__main__':
     # funGAMLS1_DM_ex()
     # funGAMLS2_DM_ex()
     # funGAMLS1_DM_parallel()
-    funGAMLS2_DM_parallel()
+    # funGAMLS2_DM_parallel()
+    funLR2()

@@ -153,8 +153,8 @@ class GA:
             fProb.append(fp_listdictCurrPop[i]['fitness'] / fFitnessSum)
         if fp_iIndIndex is None:
             adictParents = self.local_state.choice(fp_listdictCurrPop,
-                                            size=2,
-                                            p=fProb)
+                                                   size=2,
+                                                   p=fProb)
             listdictParents.append(adictParents[0])
             listdictParents.append(adictParents[1])
         else:

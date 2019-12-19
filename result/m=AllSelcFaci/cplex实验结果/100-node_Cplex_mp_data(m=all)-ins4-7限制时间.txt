@@ -1,0 +1,6 @@
+
+Every instance's objective value got by Cplex-mp method-ins4-7:
+[111338.15391544  99397.45528441 105460.22460663 112170.76313523]
+
+Every instance's CPU time used by Cplex-mp method-ins4-7:
+[17249.095607789, 19433.869343251, 17271.953046925002, 18667.879486235]

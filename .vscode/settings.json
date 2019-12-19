@@ -2,7 +2,7 @@
     "python.pythonPath": "d:\\Anaconda3\\python.exe",
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
-        "--max-line-length=248"
+        "--max-line-length=1000"
     ],
     "python.formatting.provider": "yapf",
     "editor.suggest.snippetsPreventQuickSuggestions": false

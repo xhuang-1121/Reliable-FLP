@@ -2,6 +2,7 @@
 from docplex.mp.model import Model
 from docplex.cp.model import CpoModel
 import instanceGeneration
+import time
 
 
 class CPLEX:
@@ -222,7 +223,7 @@ if __name__ == '__main__':
 
     @fp_listCplexParameters: [0:iCandidateFaciNum, 1:fAlpha]
     '''
-    iCandidateFaciNum = 50
+    iCandidateFaciNum = 10
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 100, 1000, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
@@ -276,13 +277,16 @@ if __name__ == '__main__':
     # # print(sol)  # 获取所有的变量解
     print('-------------------------------------------------------------------')
     # -----------------------docplex-cp module---------------------
+    cpu_start = time.process_time()
     cplexSolver.fun_fillCpoModel()
-    # cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
-    cpsol = cplexSolver.cpomodel.solve()
+    cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
+    # cpsol = cplexSolver.cpomodel.solve()
+    cpu_end = time.process_time()
     print("Solution status: " + cpsol.get_solve_status())
+    print("CPU time:", cpu_end-cpu_start)
 
     for i in range(cplexSolver.iCandidateFaciNum):
         if cpsol.get_all_var_solutions()[i].get_value() == 1:
             print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
-    print(cpsol)
+    # print(cpsol)
     # print(type(cpsol))
