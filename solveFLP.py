@@ -24,8 +24,8 @@ iActualInsNum = 8
 iInsNum = 8
 iRunsNum = 8
 fAlpha = 1.0
-iCandidateFaciNum = 30
-insName = '30-nodeInstances'
+iCandidateFaciNum = 50
+insName = '50-nodeInstances'
 fileName = 'ex30-node'
 
 '''

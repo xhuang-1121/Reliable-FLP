@@ -32,6 +32,29 @@ class LagrangianRelaxation:
         self.iRealFaciNum = 0
         self.feasible = False
 
+    def funInitUpperBound_greedy(self):
+        aLocaSolXj = np.ones(self.iCandidateSitesNum, dtype=np.int)
+        self.iRealFaciNum = np.sum(aLocaSolXj == 1)
+        fUB = self.funUpperBound(aLocaSolXj)
+        if fUB < self.fBestUpperBound:
+            self.fBestUpperBound = fUB
+        boolContinue = True
+        while boolContinue:
+            iUpdateNum = 0
+            for i in range(self.iCandidateSitesNum):
+                if aLocaSolXj[i] == 1:
+                    aLocaSolXj[i] = 0
+                    self.iRealFaciNum = np.sum(aLocaSolXj == 1)
+                    fUB = self.funUpperBound(aLocaSolXj)
+                    if fUB < self.fBestUpperBound:
+                        self.fBestUpperBound = fUB
+                        self.aLocaSolXj = copy.deepcopy(aLocaSolXj)
+                        iUpdateNum += 1
+                    aLocaSolXj[i] = 1
+            if iUpdateNum == 0:
+                boolContinue = False
+        return
+
     def funSolveRelaxationProblem(self):
         '''
         Solve the relaxation problem and give a lower bound of the optimal value of the original problem.
@@ -220,6 +243,7 @@ class LagrangianRelaxation:
         nonImproveIterNum = 0
         UBupdateNum = 0
         LBupdateNum = 0
+        self.funInitUpperBound_greedy()
         while meetTerminationCondition is False:
             aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
             fUpperBound = self.funUpperBound(aLocaSolXj)
@@ -274,7 +298,8 @@ if __name__ == '__main__':
     @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
     '''
     iCandidateFaciNum = 10
-    listLRParameters = [60, 2.0, 1e-8, 1.0, 0.001, True]
+    iMaxIterNum = 60
+    listLRParameters = [iMaxIterNum, 2.0, 1e-8, 1.0, 0.001, True]
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)

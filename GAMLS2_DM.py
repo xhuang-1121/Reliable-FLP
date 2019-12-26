@@ -535,14 +535,16 @@ class GA:
             listdictPopAfCros = copy.deepcopy(listdictCurrPop)
             listdictPopAfMuta = self.funMutation(listdictPopAfCros)
             listdictCurrPop = self.funSurvival(listdictCurrPop, listdictPopAfMuta)
-            print("self.iPopSize:", self.iPopSize)
+            # print("self.iPopSize:", self.iPopSize)
             print("Actual PopSize:", len(listdictCurrPop))
+            print("self.iLocalSearchIndNumEveGen:", self.iLocalSearchIndNumEveGen)
 
             listfBestIndFitness.append(listdictCurrPop[0]['fitness'])
             tupleDiversityMetrics = self.funMeasurePopDiversity(listdictCurrPop)
             listiDiversityMetric1.append(tupleDiversityMetrics[0])
             listiDiversityMetric2.append(tupleDiversityMetrics[1])
             listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd.append(tupleDiversityMetrics[2])
+            print("l3 value:", tupleDiversityMetrics[2])
 
             # 种群规模自适应
             if tupleDiversityMetrics[2] > 0.8:
