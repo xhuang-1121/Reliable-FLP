@@ -389,7 +389,8 @@ class GA:
                 dictInd['objectValue'] = 0
                 listdictNeighborPop.append(dictInd)
         # evaluate the listdictNeighborPop
-        print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
+        self.listiEveGenLocalSearchedIndNum.append(len(self.listaLocalSearchTestRepeat))
+        print("局部搜索过的个体数量:", self.listiEveGenLocalSearchedIndNum[-1])
         listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
 
         return listdictNeighborPopAfEva
@@ -549,7 +550,7 @@ class GA:
             # 种群规模自适应
             if tupleDiversityMetrics[2] > 0.8:
                 self.iPopSize += 100
-            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
+            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize-100:
                 self.iLocalSearchIndNumEveGen += 10
 
             listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor.append(tupleDiversityMetrics[3])

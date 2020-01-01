@@ -453,7 +453,7 @@ class GA:
             # 种群规模自适应
             if tupleDiversityMetrics[2] > 0.8:
                 self.iPopSize += 100
-            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize/2:
+            if self.iPopSize > self.iLocalSearchIndNumEveGen*self.iIndLen + self.iPopSize-100:
                 self.iLocalSearchIndNumEveGen += 10
 
             listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor.append(tupleDiversityMetrics[3])

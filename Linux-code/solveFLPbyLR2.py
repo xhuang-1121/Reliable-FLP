@@ -66,7 +66,7 @@ def funLR2_parallel():
     textFile.write("\n\nLowerbound for every instance:\n")
     textFile.write(str(listfLBEveIns))
     textFile.write("\n\nCPU time for every instance:\n")
-    textFile.wirte(str(listfCPUTimeEveIns))
+    textFile.write(str(listfCPUTimeEveIns))
 
 
 def funLR2():
