@@ -78,7 +78,7 @@ class LagrangianRelaxation:
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 for r in range(iAlloFaciNum):
-                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][r]
+                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][j]
         i = j = r = 0
         # compute Phi
         for j in range(self.iCandidateSitesNum):
@@ -102,13 +102,17 @@ class LagrangianRelaxation:
         j = 0
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
+        if self.boolAllo2Faci is True:
+            iAlloFaciNum = 2
+        else:
+            iAlloFaciNum = self.iRealFaciNum
         # 下面这段，j可以作为同一i的不同r, 下届会更松
         for i in range(self.iCandidateSitesNum):
             aPsiIJ0 = np.array([a3dPsi[i][0][0]])
             for j in range(1, self.iCandidateSitesNum):
                 aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
             iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
-            for r in range(2):
+            for r in range(iAlloFaciNum):
                 a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
                 fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
         # 下面这段，j只能作为同一i的某一个r

@@ -371,6 +371,7 @@ class GA:
         '''
         print("Strong")
         listdictNeighborPop = []
+        iTempLocalSearchedIndNum = len(self.listaLocalSearchTestRepeat)
         # 强local search
         for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
@@ -389,6 +390,7 @@ class GA:
                 dictInd['objectValue'] = 0
                 listdictNeighborPop.append(dictInd)
         # evaluate the listdictNeighborPop
+        self.iNewLocalSearchedIndNumAdd = len(self.listaLocalSearchTestRepeat) - iTempLocalSearchedIndNum
         self.listiEveGenLocalSearchedIndNum.append(len(self.listaLocalSearchTestRepeat))
         print("局部搜索过的个体数量:", self.listiEveGenLocalSearchedIndNum[-1])
         listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
