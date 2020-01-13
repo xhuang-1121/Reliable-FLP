@@ -106,32 +106,33 @@ class LagrangianRelaxation:
             iAlloFaciNum = 2
         else:
             iAlloFaciNum = self.iRealFaciNum
-        # 下面这段，j可以作为同一i的不同r, 下届会更松
-        for i in range(self.iCandidateSitesNum):
-            aPsiIJ0 = np.array([a3dPsi[i][0][0]])
-            for j in range(1, self.iCandidateSitesNum):
-                aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-            iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
-            for r in range(iAlloFaciNum):
-                a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
-                fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
-        # 下面这段，j只能作为同一i的某一个r
+        # # 下面这段，j可以作为同一i的不同r
         # for i in range(self.iCandidateSitesNum):
         #     aPsiIJ0 = np.array([a3dPsi[i][0][0]])
         #     for j in range(1, self.iCandidateSitesNum):
         #         aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-        #     aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
-        #     for r in range(2):
-        #         iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
-        #         a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
-        #         # Compute lower bound
-        #         fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
+        #     iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
+        #     for r in range(iAlloFaciNum):
+        #         a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
+        #         fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
+        # 下面这段，j只能作为同一i的某一个r
+        for i in range(self.iCandidateSitesNum):
+            aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+            for j in range(1, self.iCandidateSitesNum):
+                aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
+            for r in range(iAlloFaciNum):
+                iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
+                a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
+                # Compute lower bound
+                fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
 
         # Compute lower bound
         fLowerBound += np.dot(aPhi, aLocaSolXj)
 
         # Until now we get Y_{ijr}. Next we should check whether Y_{ijr} is feasible for original problem.
-        feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
+        # feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
+        feasible = False
         return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
 
     def funCheckFeasible(self, fp_aLocaSolXj, fp_a3dAlloSolYijr):
