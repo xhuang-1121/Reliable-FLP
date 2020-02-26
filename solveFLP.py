@@ -17,22 +17,25 @@ import time
 import xlwt
 import LR1
 import LR2
+import sys
+
+listlist_bestSolsOfAllIns = []  # 如果有重复多次运行，就取最好的结果作为最终输出结果,每个dict是一个问题实例的解，多个问题实例的解组成一个list
 
 # Global variables
 seed = range(10)  # 用于并行程序设置不同的随机种子
-iActualInsNum = 8
+iActualInsNum = 1
 iInsNum = 8
 iRunsNum = 8
 fAlpha = 1.0
-iCandidateFaciNum = 50
-insName = '50-nodeInstances'
-fileName = 'ex30-node'
+iCandidateFaciNum = 10
+insName = '10-nodeInstances'
+fileName = 'ex10-node'
 
 '''
 @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha, 6:boolAllo2Faci]
 '''
-iGenNum = 50
-iPopSize = 50
+iGenNum = 10
+iPopSize = 10
 fCrosRate = 0.9
 fMutRate = 0.1
 boolAllo2Faci = True
@@ -51,11 +54,12 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
 
 
 def funGA_DM_single(fp_tuple_combOfInsRuns):
+    local_state = np.random.RandomState(fp_tuple_combOfInsRuns[1])
     print("Begin:")
     print("Running......")
     cpuStart = time.process_time()
     # 调用GADM求解
-    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0])
+    GeneticAlgo = GA_DM.GA(listGAParameters, fp_tuple_combOfInsRuns[0], local_state)
     listdictFinalPop, listGenIndex, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen = GeneticAlgo.funGA_main()
     cpuEnd = time.process_time()
     cpuTime = cpuEnd - cpuStart
@@ -832,6 +836,8 @@ def funGAMLS2_DM_ex():
         listiFitEvaNumByThisGen_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
         listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
         listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd_AllRunsAve = np.zeros((iGenNum + 1,)).tolist()
+        dict_bestIndOfThisIns = {'chromosome': 0,
+                                 'fitness': 0}  # 存储该instance下的最好解
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
             print("Begin: ins " + str(i) + ", Runs " + str(j))
             print("Running......")
@@ -839,14 +845,19 @@ def funGAMLS2_DM_ex():
             # 调用GADM求解
             local_state = np.random.RandomState()
             GeneticAlgo = GAMLS2_DM.GA(listGAParameters, listIns[3], local_state)
-            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd = GeneticAlgo.funGA_main()
+            listdictFinalPop, listGenNum, listfBestIndFitnessEveGen, listiDiversityMetric1, listiDiversityMetric2, listiFitEvaNumByThisGen, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd, listfEveGenProportion_belongToOnlyCurrGenLocalSearchedIndNeighbor, listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd, listiEveGenLocalSearchedIndNum = GeneticAlgo.funGA_main()
             cpuEnd = time.process_time()
             # 记录CPU time，累加
             listfAveCPUTimeEveryIns[i] += (cpuEnd - cpuStart)
-            # 记录最终种群中最好个体的fitness和目标函数值，累加
+
             print("Objective value:", listdictFinalPop[0]['objectValue'])
+            # 更新dict_bestInd
+            if listdictFinalPop[0]['fitness'] > dict_bestIndOfThisIns['fitness']:
+                dict_bestIndOfThisIns['chromosome'] = listdictFinalPop[0]['chromosome']
+                dict_bestIndOfThisIns['fitness'] = listdictFinalPop[0]['fitness']
             if listfBestIndFitnessEveGen[-1] != 1/listdictFinalPop[0]['objectValue']:
                 print("Wrong. Please check funLS_DM().")
+            # 记录最终种群中最好个体的fitness和目标函数值，累加
             a_2d_fEveInsEveRunObjValue[i][j] = listdictFinalPop[0]['objectValue']
             listfAveFitnessEveryIns[i] += listfBestIndFitnessEveGen[-1]
             listfAveObjValueEveryIns[i] += listdictFinalPop[0]['objectValue']
@@ -861,6 +872,16 @@ def funGAMLS2_DM_ex():
                 listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd_AllRunsAve[g] += listfEveGenProportion_belongToNeighborOfAllLocalSearchedInd[g]
 
         print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+
+        # 将个体的chromosome从01转化为被选中地址的索引
+        list_bestSolOfThisIns = []
+        for c in range(iCandidateFaciNum):
+            if dict_bestIndOfThisIns['chromosome'][c] == 1:
+                list_bestSolOfThisIns.append(c)
+
+        # 存储每个实例多次运行后最好的运行结果
+        listlist_bestSolsOfAllIns.append(list_bestSolOfThisIns)
+        print("Best sol:", listlist_bestSolsOfAllIns)
         # 平均每次运行的时间
         listfAveCPUTimeEveryIns[i] /= iRunsNum
         # 平均fitness和目标函数值
@@ -902,6 +923,7 @@ def funGAMLS2_DM_ex():
         ax3.set_xticks(listfFeIndex)
         ax3.set_xticklabels(listFeXCoordinate)
         plt.show()
+        # print("Final Solution:", listdictFinalPop[0]['chromosome'])
         print("Average Objective value:", 1/listfAveBestIndFitnessEveryGen[-1])
         print("Average Objective value:", listfAveObjValueEveryIns)
 
@@ -1407,30 +1429,56 @@ def funCplex_cp_ex():
 
 
 def funLR2():
-    iMaxIterationNum = 60
+    iMaxIterationNum = 10
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
     boolAllo2FaciNum = True
-    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2FaciNum]
+
+    # @sys.argv = [0:xx.py, 1:cplex/notcplex, 2:1/2/3, 3:iMaxIterationNum]
+    if sys.argv[1] == 'cplex':
+        boolCallCplexOrNot = True
+    else:
+        boolCallCplexOrNot = False
+
+    if sys.argv[2] == '1':
+        iHowToAlloYijr = 1
+    elif sys.argv[2] == '2':
+        iHowToAlloYijr = 2
+    else:
+        iHowToAlloYijr = 3
+    if len(sys.argv) > 3:
+        iMaxIterationNum = int(sys.argv[3])
+    # boolCallCplexOrNot = False
+    # iHowToAlloYijr = 1  # 1 or 2 or 3
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2FaciNum, boolCallCplexOrNot, iHowToAlloYijr]
     listfUBEveIns = []
     listfLBEveIns = []
+    listCPUTime = []
     f = open(insName, 'rb')
-    textFile = open('ex10-node_LR2(m=2).txt', 'a')
+    textFile = open(fileName + '_LR2(m=2).txt', 'a')
     for i in range(iActualInsNum):
         print("Begin: Ins " + str(i))
         print("Running......")
         ins = pickle.load(f)
+
+        cpu_start = time.process_time() 
         LagRela = LR2.LagrangianRelaxation(listLRParameters, ins)
         LagRela.funInitMultiplierLambda()
         upperBound, lowerBound = LagRela.funLR_main()
+        cpu_end = time.process_time()
+        cpuTime = cpu_end - cpu_start
+
         listfUBEveIns.append(upperBound)
         listfLBEveIns.append(lowerBound)
+        listCPUTime.append(cpuTime)
         print("End: Ins " + str(i) + "\n")
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
     textFile.write(str(listfLBEveIns))
+    textFile.write("\n\nCPU Time for every instance:\n")
+    textFile.write(str(listCPUTime))
 
 
 def funLR2_single(fp_obInstance):
@@ -1440,30 +1488,53 @@ def funLR2_single(fp_obInstance):
     fBeta = 2.0
     fBetaMin = 1e-8
     fToleranceEpsilon = 0.0001
-    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci]
+
+    # @sys.argv = [0:xx.py, 1:cplex/notcplex, 2:1/2/3, 3:iMaxIterationNum]
+    if sys.argv[1] == 'cplex':
+        boolCallCplexOrNot = True
+    else:
+        boolCallCplexOrNot = False
+
+    if sys.argv[2] == '1':
+        iHowToAlloYijr = 1
+    elif sys.argv[2] == '2':
+        iHowToAlloYijr = 2
+    else:
+        iHowToAlloYijr = 3
+    if len(sys.argv) > 3:
+        iMaxIterationNum = int(sys.argv[3])
+
+    # boolCallCplexOrNot = False
+    # iHowToAlloYijr = 1  # 1 or 2 or 3
+    listLRParameters = [iMaxIterationNum, fBeta, fBetaMin, fAlpha, fToleranceEpsilon, boolAllo2Faci, boolCallCplexOrNot, iHowToAlloYijr]
+    cpu_start = time.process_time()
     LagRela = LR2.LagrangianRelaxation(listLRParameters, fp_obInstance)
     LagRela.funInitMultiplierLambda()
     upperBound, lowerBound = LagRela.funLR_main()
+    cpu_end = time.process_time()
+    cpuTime = cpu_end - cpu_start
     print("End: Ins\n")
-    return upperBound, lowerBound
+    return upperBound, lowerBound, cpuTime
 
 
 def funLR2_parallel():
     listfUBEveIns = []
     listfLBEveIns = []
+    listfCPUTimeEveIns = []
     f = open(insName, 'rb')
-    textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\Reliable-FLP\\100-node_LR2(m=2).txt', 'a')
+    textFile = open(fileName + '_LR2(m=2).txt', 'a')
     list_ins = []
     for i in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     pool = Pool()
-    listtuple_expeResult = pool.map(funLR2_single, list_ins)
+    listtuple_expeResult = pool.map(funLR2_single, list_ins[:1])  # list_ins[]中的数字应该与iActualInsNum相匹配
     pool.close()
     pool.join()
-    for i in range(iInsNum):
+    for i in range(iActualInsNum):
         listfUBEveIns.append(listtuple_expeResult[i][0])
         listfLBEveIns.append(listtuple_expeResult[i][1])
+        listfCPUTimeEveIns.append(listtuple_expeResult[i][2])
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
@@ -1509,4 +1580,5 @@ if __name__ == '__main__':
     # funGAMLS2_DM_ex()
     # funGAMLS1_DM_parallel()
     # funGAMLS2_DM_parallel()
-    funLR2()
+    # funLR2()
+    funLR2_parallel()

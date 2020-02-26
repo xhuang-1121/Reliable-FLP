@@ -2,25 +2,35 @@
 import instanceGeneration
 import GA
 import usecplex
+from docplex.mp.model import Model
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
+import sys
 
 
 class LagrangianRelaxation:
     def __init__(self, fp_listParameters, fp_obInstance):
         '''
-        @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon, 5:boolAllo2Faci]
+        @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon, 5:boolAllo2Faci, 6:boolCallCplexOrNot, 7:iHowToAlloYijr: 1or2or3]
         '''
+        self.model = Model()  # 调用cplex mp model
+
         self.iMaxIterNum = fp_listParameters[0]
         self.fBeta = fp_listParameters[1]
         self.fBetaMin = fp_listParameters[2]
         self.fAlpha = fp_listParameters[3]
         self.fToleranceEpsilon = fp_listParameters[4]  # Used in funTerminateCondition()
-        self.boolAllo2Faci = fp_listParameters[4]
+        self.boolAllo2Faci = fp_listParameters[5]
+        self.boolCallCplexOrNot = fp_listParameters[6]
+        self.iHowToAlloYijr = fp_listParameters[7]  # 该参数只有不调用cplex的时候才起作用
         self.obInstance = fp_obInstance
 
         self.iCandidateSitesNum = self.obInstance.iSitesNum
+        self.iCandidateFaciNum = self.obInstance.iSitesNum
+        # creat decision variables list
+        self.listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
+        self.listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
         # lambda: Lagrangian multiplier
         self.a2dLambda = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # location decision
@@ -106,26 +116,45 @@ class LagrangianRelaxation:
             iAlloFaciNum = 2
         else:
             iAlloFaciNum = self.iRealFaciNum
-        # # 下面这段，j可以作为同一i的不同r
-        # for i in range(self.iCandidateSitesNum):
-        #     aPsiIJ0 = np.array([a3dPsi[i][0][0]])
-        #     for j in range(1, self.iCandidateSitesNum):
-        #         aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-        #     iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
-        #     for r in range(iAlloFaciNum):
-        #         a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
-        #         fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
-        # 下面这段，j只能作为同一i的某一个r
-        for i in range(self.iCandidateSitesNum):
-            aPsiIJ0 = np.array([a3dPsi[i][0][0]])
-            for j in range(1, self.iCandidateSitesNum):
-                aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
-            aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
-            for r in range(iAlloFaciNum):
-                iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
-                a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
-                # Compute lower bound
-                fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
+        
+        # 怎样分配Yijr
+        if self.iHowToAlloYijr == 1:
+            # 1-下面这段，j可以作为同一i的不同r
+            for i in range(self.iCandidateSitesNum):
+                aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+                for j in range(1, self.iCandidateSitesNum):
+                    aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+                iIndexOfMinPsiFaciJ = np.where(aPsiIJ0 == min(aPsiIJ0))[0][0]
+                for r in range(iAlloFaciNum):
+                    a3dAlloSolYijr[i][iIndexOfMinPsiFaciJ][r] = 1
+                    fLowerBound += a3dPsi[i][iIndexOfMinPsiFaciJ][r]
+        elif self.iHowToAlloYijr == 2:
+            # 2-下面这段，j只能作为同一i的某一个r
+            for i in range(self.iCandidateSitesNum):
+                aPsiIJ0 = np.array([a3dPsi[i][0][0]])
+                for j in range(1, self.iCandidateSitesNum):
+                    aPsiIJ0 = np.append(aPsiIJ0, a3dPsi[i][j][0])
+                aSortedPsiIJ0 = sorted(aPsiIJ0)  # default increasing order, 对于同一i的某一r下，所有j的Psi的大小顺序是一样的，这里用r==0时来排序
+                for r in range(iAlloFaciNum):
+                    iIndexOfFaciJ = np.where(aPsiIJ0 == aSortedPsiIJ0[r])[0][0]
+                    a3dAlloSolYijr[i][iIndexOfFaciJ][r] = 1
+                    # Compute lower bound
+                    fLowerBound += a3dPsi[i][iIndexOfFaciJ][r]
+        else:
+            # 3-下面分配Yijr, 参考了Snyder2005的文章
+            for j in range(self.iCandidateSitesNum):
+                if aLocaSolXj[j] == 1:
+                    for i in range(self.iCandidateSitesNum):
+                        for r in range(iAlloFaciNum):
+                            if a3dPsi[i][j][r] < 0:
+                                aPsiIJr = []
+                                for r2 in range(iAlloFaciNum):
+                                    aPsiIJr.append(a3dPsi[i][j][r2])
+                                aSortedPsiIJr = sorted(aPsiIJr)
+                                if a3dPsi[i][j][r] == aSortedPsiIJr[0]:
+                                    a3dAlloSolYijr[i][j][r] = 1
+                                    # Compute lower bound
+                                    fLowerBound += a3dPsi[i][j][r]
 
         # Compute lower bound
         fLowerBound += np.dot(aPhi, aLocaSolXj)
@@ -134,6 +163,90 @@ class LagrangianRelaxation:
         # feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
         feasible = False
         return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
+
+    def funSolveRelaxationProblem_useCplex(self):
+        '''
+        Solve the relaxation problem and give a lower bound of the optimal value of the original problem.
+        @return: aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
+        '''
+        # location decision
+        aLocaSolXj = np.zeros(self.iCandidateSitesNum, dtype=np.int)
+        # allocation decision
+        a3dAlloSolYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum), dtype=np.int)
+        # relaxation problem's object value, lower bound
+        fLowerBound = 0
+        # Psi, i.e., ψ
+        a3dPsi = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum))
+        # Phi, i.e., φ
+        aPhi = np.zeros((self.iCandidateSitesNum,))
+        # compute Psi
+        if self.boolAllo2Faci is True:
+            iAlloFaciNum = 2
+        else:
+            iAlloFaciNum = self.iCandidateSitesNum
+        for i in range(self.iCandidateSitesNum):
+            for j in range(self.iCandidateSitesNum):
+                for r in range(iAlloFaciNum):
+                    a3dPsi[i][j][r] = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb) + self.a2dLambda[i][j]
+        i = j = r = 0
+        # compute Phi
+        for j in range(self.iCandidateSitesNum):
+            fSumLambda = 0
+            for i in range(self.iCandidateSitesNum):
+                fSumLambda += self.a2dLambda[i][j]
+            aPhi[j] = self.obInstance.aiFixedCost[j] - fSumLambda
+        i = j = 0
+
+        # use cplex to get lower bound
+        self.fun_fillMpModel_Allo2Faci(aPhi, a3dPsi)
+        sol = self.model.solve()
+        for i in range(self.iCandidateFaciNum):
+            aLocaSolXj[i] = sol.get_value('X_'+str(i))
+            # if sol.get_value('X_'+str(i)) == 1:
+            #     print('X_'+str(i)+" =", 1)
+        self.iRealFaciNum = np.sum(aLocaSolXj == 1)
+        iAlloNum = 0
+        for i in range(self.iCandidateFaciNum):
+            for j in range(self.iCandidateFaciNum):
+                for r in range(self.iCandidateFaciNum):
+                    a3dAlloSolYijr[i][j][r] = sol.get_value('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r))
+                    # if sol.get_value('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)) == 1:
+                    #     iAlloNum += 1
+                    #     print('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)+" =", 1)
+
+        fLowerBound = sol.get_objective_value()
+        # feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
+        feasible = False
+        return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
+
+    def fun_fillMpModel_Allo2Faci(self, aPhi, a3dPsi):
+        # # creat decision variables list, 这个放在了__init__函数中，否则总是警告变量名重复
+        # listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
+        # listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
+
+        # construct objective function
+        objFunction = 0
+        for j in range(self.iCandidateFaciNum):
+            objFunction += aPhi[j] * self.listDeciVarX[j]
+        for i in range(self.iCandidateFaciNum):
+            for j in range(self.iCandidateFaciNum):
+                for r in range(2):  # 只分配两个设施
+                    objFunction += a3dPsi[i][j][r] * self.listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+
+        self.model.minimize(objFunction)
+        # add constraints
+        for i in range(self.iCandidateFaciNum):
+            for r in range(2):  # 只分配两个设施
+                cons1 = 0
+                for j in range(self.iCandidateFaciNum):
+                    cons1 += self.listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                self.model.add_constraint(cons1 == 1)  # constraint 1
+
+        cons4 = 0
+        cons4 = sum(self.listDeciVarX)
+        # for j in range(self.iCandidateFaciNum):
+        #     cons4 += listDeciVarX[j]
+        self.model.add_constraint(cons4 >= 2)
 
     def funCheckFeasible(self, fp_aLocaSolXj, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):
@@ -228,10 +341,10 @@ class LagrangianRelaxation:
         @fp_lowerBound_n: The value of lower bound for the n-th iteration.
         @return: "True" represents the process should be terminated.
         '''
-        if fp_lowerBound_n < self.fBestUpperBound and ((self.fBestUpperBound - fp_lowerBound_n) / self.fBestUpperBound) < self.fToleranceEpsilon:
-            print("1111111111111111111")
-            return True
-        elif fp_n > self.iMaxIterNum:
+        # if fp_lowerBound_n < self.fBestUpperBound and ((self.fBestUpperBound - fp_lowerBound_n) / self.fBestUpperBound) < self.fToleranceEpsilon:
+        #     print("1111111111111111111")
+        #     return True
+        if fp_n > self.iMaxIterNum:
             print("222222222222222222222")
             return True
         elif self.fBeta < self.fBetaMin:
@@ -250,7 +363,10 @@ class LagrangianRelaxation:
         LBupdateNum = 0
         self.funInitUpperBound_greedy()
         while meetTerminationCondition is False:
-            aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
+            if self.boolCallCplexOrNot is False:  # 不调用cplex
+                aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
+            else:  # 调用cplex
+                aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem_useCplex()
             fUpperBound = self.funUpperBound(aLocaSolXj)
             if fLowerBound > fUpperBound:
                 print("Whether LB < UP? : ", n, fLowerBound < fUpperBound)
@@ -282,7 +398,7 @@ class LagrangianRelaxation:
             self.a2dLambda = self.funUpdateMultiplierLambda(aLocaSolXj, fLowerBound)
             meetTerminationCondition = self.funMeetTerminationCondition(fLowerBound, n)
             n += 1
-        print("n: ", n)
+            print("n: ", n)
         print("UB update number: ", UBupdateNum)
         print("LB update number: ", LBupdateNum)
         # print("Xj: ", self.aLocaSolXj)
@@ -294,17 +410,32 @@ class LagrangianRelaxation:
 
 if __name__ == '__main__':
     '''
-    @listLRParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon]
+    @listLRParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon, 5:boolAllo2Faci, 6:boolCallCplexOrNot, 7:iHowToAlloYijr: 1or2or3]
 
     @listInstPara=[0:iSitesNum, 1:iScenNum, 2:iDemandLB, 3:iDemandUB, 4:iFixedCostLB, 5:iFixedCostUP, 6:iCoordinateLB, 7:iCoordinateUB, 8:fFaciFailProb]
 
     @fp_listCplexParameters: [0:iCandidateFaciNum, 1:fAlpha]
 
     @listGAParameters = [0:iGenNum, 1:iPopSize, 2:iIndLen, 3:fCrosRate, 4:fMutRate, 5:fAlpha]
+
+    @sys.argv = [0:xx.py, 1:cplex/notcplex, 2:1/2/3, 3:iMaxIterationNum]
     '''
+    if sys.argv[1] == 'cplex':
+        boolCallCplexOrNot = True
+    else:
+        boolCallCplexOrNot = False
+
+    if sys.argv[2] == '1':
+        iHowToAlloYijr = 1
+    elif sys.argv[2] == '2':
+        iHowToAlloYijr = 2
+    else:
+        iHowToAlloYijr = 3
+
+    iMaxIterationNum = int(sys.argv[3])
+
     iCandidateFaciNum = 10
-    iMaxIterNum = 60
-    listLRParameters = [iMaxIterNum, 2.0, 1e-8, 1.0, 0.001, True]
+    listLRParameters = [iMaxIterationNum, 2.0, 1e-8, 1.0, 0.001, True, boolCallCplexOrNot, iHowToAlloYijr]
     listInstPara = [iCandidateFaciNum, 1, 0, 1000, 500, 1500, 0, 1, 0.05]
     # Generate instance
     obInstance = instanceGeneration.Instances(listInstPara)
@@ -314,18 +445,18 @@ if __name__ == '__main__':
     LR.funInitMultiplierLambda()
     LR.funLR_main()
     print("-------------------------------------------------------------")
-    # # cplex-mp module
-    # listCplexParameters = [iCandidateFaciNum, 1]
-    # cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
-    # cplexSolver.fun_fillMpModel()
-    # sol = cplexSolver.model.solve()
-    # cplexSolver.model.print_information()
-    # optimialValue = sol.get_objective_value()
-    # print("Objective value: ", optimialValue)
-    # print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
-    # for i in range(cplexSolver.iCandidateFaciNum):
-    #     if sol.get_value('X_'+str(i)) == 1:
-    #         print('X_'+str(i)+" =", 1)
+    # cplex-mp module
+    listCplexParameters = [iCandidateFaciNum, 1]
+    cplexSolver = usecplex.CPLEX(listCplexParameters, obInstance)
+    cplexSolver.fun_fillMpModel()
+    sol = cplexSolver.model.solve()
+    cplexSolver.model.print_information()
+    optimialValue = sol.get_objective_value()
+    print("Objective value: ", optimialValue)
+    print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
+    for i in range(cplexSolver.iCandidateFaciNum):
+        if sol.get_value('X_'+str(i)) == 1:
+            print('X_'+str(i)+" =", 1)
     print("-------------------------------------------------------------")
     # # genetic algorithm
     # iGenNum = 10

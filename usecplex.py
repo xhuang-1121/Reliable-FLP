@@ -66,7 +66,7 @@ class CPLEX:
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                for r in range(self.iCandidateFaciNum):  # 只分配两个设施
+                for r in range(self.iCandidateFaciNum):  # 不只分配两个设施
                     fTranCost = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb)
                     listTranCost.append(fTranCost)
                     objFunction += fTranCost * listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
@@ -127,7 +127,7 @@ class CPLEX:
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                for r in range(2):  # 只分配两个设施
+                for r in range(2):  # 只分配两个设施,可改为2~all间的别的数字
                     fTranCost = self.fAlpha * self.obInstance.aiDemands[i] * self.obInstance.af_2d_TransCost[i][j] * pow(self.obInstance.fFaciFailProb, r) * (1 - self.obInstance.fFaciFailProb)
                     listTranCost.append(fTranCost)
                     objFunction += fTranCost * listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
