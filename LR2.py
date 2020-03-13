@@ -14,8 +14,6 @@ class LagrangianRelaxation:
         '''
         @fp_listParameters=[0:iMaxIterationNum, 1:fBeta, 2:fBetaMin, 3:fAlpha, 4:fToleranceEpsilon, 5:boolAllo2Faci, 6:boolCallCplexOrNot, 7:iHowToAlloYijr: 1or2or3]
         '''
-        self.model = Model()  # 调用cplex mp model
-
         self.iMaxIterNum = fp_listParameters[0]
         self.fBeta = fp_listParameters[1]
         self.fBetaMin = fp_listParameters[2]
@@ -28,9 +26,13 @@ class LagrangianRelaxation:
 
         self.iCandidateSitesNum = self.obInstance.iSitesNum
         self.iCandidateFaciNum = self.obInstance.iSitesNum
-        # creat decision variables list
-        self.listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
-        self.listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
+
+        if self.boolCallCplexOrNot is True:
+            self.model = Model()  # 调用cplex mp model
+            # creat decision variables list
+            self.listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
+            self.listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
+
         # lambda: Lagrangian multiplier
         self.a2dLambda = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum))
         # location decision
@@ -116,7 +118,7 @@ class LagrangianRelaxation:
             iAlloFaciNum = 2
         else:
             iAlloFaciNum = self.iRealFaciNum
-        
+
         # 怎样分配Yijr
         if self.iHowToAlloYijr == 1:
             # 1-下面这段，j可以作为同一i的不同r
@@ -198,14 +200,19 @@ class LagrangianRelaxation:
         i = j = 0
 
         # use cplex to get lower bound
-        self.fun_fillMpModel_Allo2Faci(aPhi, a3dPsi)
+        if self.boolAllo2Faci is True:
+            self.fun_fillMpModel_Allo2Faci(aPhi, a3dPsi)
+        elif self.boolAllo2Faci is False:
+            print('------------------------------------------------')
+            self.fun_fillMpModel_AlloAllSelcFaci(aPhi, a3dPsi)
+
         sol = self.model.solve()
         for i in range(self.iCandidateFaciNum):
             aLocaSolXj[i] = sol.get_value('X_'+str(i))
             # if sol.get_value('X_'+str(i)) == 1:
             #     print('X_'+str(i)+" =", 1)
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
-        iAlloNum = 0
+
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
                 for r in range(self.iCandidateFaciNum):
@@ -247,6 +254,42 @@ class LagrangianRelaxation:
         # for j in range(self.iCandidateFaciNum):
         #     cons4 += listDeciVarX[j]
         self.model.add_constraint(cons4 >= 2)
+
+    def fun_fillMpModel_AlloAllSelcFaci(self, aPhi, a3dPsi):
+        # # creat decision variables list, 这个放在了__init__函数中，否则总是警告变量名重复
+        # listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
+        # listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
+
+        # construct objective function
+        objFunction = 0
+        for j in range(self.iCandidateFaciNum):
+            objFunction += aPhi[j] * self.listDeciVarX[j]
+        for i in range(self.iCandidateFaciNum):
+            for j in range(self.iCandidateFaciNum):
+                for r in range(self.iCandidateFaciNum):  # 不只分配两个设施
+                    objFunction += a3dPsi[i][j][r] * self.listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+
+        self.model.minimize(objFunction)
+        # add constraints
+        cons4 = 0
+        cons4 = sum(self.listDeciVarX)
+        # for j in range(self.iCandidateFaciNum):
+        #     cons4 += listDeciVarX[j]
+        self.model.add_constraint(cons4 >= 2)
+
+        # constraint b
+        for i in range(self.iCandidateFaciNum):
+            for r in range(self.iCandidateFaciNum):
+                consB = 0
+                for j in range(self.iCandidateFaciNum):
+                    consB += self.listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                self.model.add_constraint(consB <= 1)
+
+        # constraint d
+        for i in range(self.iCandidateFaciNum):
+            for j in range(self.iCandidateFaciNum):
+                for r in range(self.iCandidateFaciNum):
+                    self.model.add_constraint(self.listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r] <= self.listDeciVarX[j])
 
     def funCheckFeasible(self, fp_aLocaSolXj, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):

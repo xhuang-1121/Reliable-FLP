@@ -1,0 +1,97 @@
+
+Upperbound for every instance:
+[2600.2880109922444]
+
+Lowerbound for every instance:
+[1595.0]
+
+CPUTime for every instance:
+[2.03125]
+Upperbound for every instance:
+[2600.2880109922444]
+
+Lowerbound for every instance:
+[1595.0]
+
+CPUTime for every instance:
+[3.03125]
+Upperbound for every instance:
+[2463.1852047995894]
+
+Lowerbound for every instance:
+[2418.8457850319814]
+
+CPUTime for every instance:
+[0.359375]
+Upperbound for every instance:
+[3015.0422291106015]
+
+Lowerbound for every instance:
+[1459.0]
+
+CPUTime for every instance:
+[1.953125]
+Upperbound for every instance:
+[3015.0422291106015]
+
+Lowerbound for every instance:
+[1459.0]
+
+CPUTime for every instance:
+[1.828125]
+Upperbound for every instance:
+[3121.982696054009]
+
+Lowerbound for every instance:
+[3149.3217892176635]
+
+CPUTime for every instance:
+[0.171875]
+Upperbound for every instance:
+[3172.5423265671934]
+
+Lowerbound for every instance:
+[3705.8888436497186]
+
+CPUTime for every instance:
+[0.234375]
+Upperbound for every instance:
+[3172.5423265671934]
+
+Lowerbound for every instance:
+[1542.0]
+
+CPUTime for every instance:
+[0.1875]
+Upperbound for every instance:
+[2600.2880109922444]
+
+Lowerbound for every instance:
+[1595.0]
+
+CPUTime for every instance:
+[1.796875]
+Upperbound for every instance:
+[2463.1852047995894]
+
+Lowerbound for every instance:
+[2674.897573737043]
+
+CPUTime for every instance:
+[0.1875]
+Upperbound for every instance:
+[2463.1852047995894]
+
+Lowerbound for every instance:
+[2782.130278194386]
+
+CPUTime for every instance:
+[0.1875]
+Upperbound for every instance:
+[2463.1852047995894]
+
+Lowerbound for every instance:
+[1595.0]
+
+CPUTime for every instance:
+[0.234375]

@@ -38,7 +38,7 @@ iGenNum = 10
 iPopSize = 10
 fCrosRate = 0.9
 fMutRate = 0.1
-boolAllo2Faci = True
+boolAllo2Faci = False
 listGAParameters = [iGenNum, iPopSize, iCandidateFaciNum, fCrosRate, fMutRate, fAlpha, boolAllo2Faci]
 
 
@@ -1280,7 +1280,7 @@ def funCplex_mp_single(fp_obInstance):
     cpu_start = time.process_time()
     cplexSolver = usecplex.CPLEX(listCplexParameters, fp_obInstance)
     if boolAllo2Faci is True:
-            cplexSolver.fun_fillMpModel()
+        cplexSolver.fun_fillMpModel()
     else:
         cplexSolver.fun_fillMpModel_AlloAllSelcFaci()
     sol = cplexSolver.model.solve()
@@ -1482,7 +1482,7 @@ def funLR2():
 
 
 def funLR2_single(fp_obInstance):
-    print("Begin: Ins ")
+    print(insName+'_'+sys.argv[1]+'_Yijr-'+sys.argv[2]+'_'+sys.argv[3]+'iteration')
     print("Running......")
     iMaxIterationNum = 600
     fBeta = 2.0
@@ -1539,6 +1539,8 @@ def funLR2_parallel():
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
     textFile.write(str(listfLBEveIns))
+    textFile.write("\n\nCPUTime for every instance:\n")
+    textFile.write(str(listfCPUTimeEveIns))
 
 
 def funLR1():

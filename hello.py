@@ -45,19 +45,23 @@ def test():
 
 
 if __name__ == '__main__':
-    """ fileName = "0600-node"
-    iGenNum = 250
+
+    fileName = "0600-node_RFLPm=2_GAMLS_225Gen_"
+    iGenNum = 225
+    # 下面4个list都需要手动输入数据来画图
     listfAveBestIndFitnessEveryGen = []
     listiAveDiversityMetric1EveGen = []
+    listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsAve = []
     listiAveFitEvaNumByThisGen = []
+
     fig = plt.figure()
     listGenIndex = [g for g in range(iGenNum + 1)]
     ax1 = fig.add_subplot(111)
-    l1, = ax1.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
+    l1, = ax1.plot(listGenIndex, listfAveBestIndFitnessEveryGen[:(iGenNum + 1)])
     # 右方Y轴
     ax2 = ax1.twinx()
-    l2, = ax2.plot(listGenIndex, listiAveDiversityMetric1EveGen, 'r')
-    # l3, = ax2.plot(listGenIndex, listiAveDiversityMetric2EveGen, 'purple', linestyle='--')
+    l2, = ax2.plot(listGenIndex, listiAveDiversityMetric1EveGen[:(iGenNum + 1)], 'r')
+    l3, = ax2.plot(listGenIndex, listfEveGenProportion_belongToLocalSearchedIndNeighbor_exceptCurrLocalSearchedInd_AllRunsAve[:(iGenNum + 1)], 'purple', marker='p', linestyle='--')
     for label in ax2.yaxis.get_ticklabels():
         label.set_fontsize(8)
     # 上方X轴
@@ -69,20 +73,20 @@ if __name__ == '__main__':
     for f in range(len(listfFeIndex)):
         listFeXCoordinate.append(listiAveFitEvaNumByThisGen[int(listfFeIndex[f])])
     # print("listFeXCoordinate:", listFeXCoordinate)
-    ax3.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
+    ax3.plot(listGenIndex, listfAveBestIndFitnessEveryGen[:(iGenNum + 1)])
     ax3.set_xticks(listfFeIndex)
     ax3.set_xticklabels(listFeXCoordinate, rotation=10)
     for label in ax3.xaxis.get_ticklabels():
         label.set_fontsize(6)
-    plt.legend(handles=[l1, l2], labels=['l1', 'l2'], loc='best')
+    plt.legend(handles=[l1, l2, l3], labels=['l1', 'l2', 'l3'], loc='best')
 
     ax1.set_xlabel("# of Generation")
     ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
     ax2.set_ylabel("Diversity Metric")
-    plt.savefig(fileName + '_GASLSDM_Curve(m=2)-ins'+str(7)+'.svg') """
+    plt.savefig(fileName + '_Curve(m=2)-ins'+str(4)+'.svg')
 
 
-    f = open('10-nodeInstances', 'rb')
+    """ f = open('10-nodeInstances', 'rb')
     ins = pickle.load(f)
     x = ins.a_2d_SitesCoordi[:, 0]  # 横坐标数组，大小[0, 1]
     y = ins.a_2d_SitesCoordi[:, 1]  # 纵坐标数组
@@ -91,7 +95,7 @@ if __name__ == '__main__':
     f_y = ins.a_2d_SitesCoordi[:2, 1]
     plt.scatter(f_x, f_y, alpha=1, s=30, marker='*', c='r')
     # plt.plot(list(x), list(y), 'bo', alpha=0.6, ms=2)  # 另一种绘制散点图的方法, ms控制点的大小
-    plt.show()
+    plt.show() """
 
     # data1 = [11784.86154, 11780.24259, 11732.45826, 11997.97669, 11860.6101, 12383.62024, 11906.57894, 12205.63157, 11784.86154, 11902.06717]
     # data2 = [11780.24259, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11780.24259]
