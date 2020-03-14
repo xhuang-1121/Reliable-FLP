@@ -305,7 +305,11 @@ class GA:
         listdictNeighborPop = []
         iTempLocalSearchedIndNum = len(self.listaLocalSearchTestRepeat)
         # 弱local search
-        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
+        if self.iPopSize < self.iLocalSearchIndNumEveGen:
+            tem_LSedIndNumEveGen = self.iPopSize
+        else:
+            tem_LSedIndNumEveGen = self.iLocalSearchIndNumEveGen
+        for i in range(tem_LSedIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
@@ -324,6 +328,8 @@ class GA:
         # evaluate the listdictNeighborPop
         self.iNewLocalSearchedIndNumAdd = len(self.listaLocalSearchTestRepeat) - iTempLocalSearchedIndNum
         print("搜索过邻域的个体数:", len(self.listaLocalSearchTestRepeat))
+        self.listiEveGenLocalSearchedIndNum.append(len(self.listaLocalSearchTestRepeat))
+        print("局部搜索过的个体数量:", self.listiEveGenLocalSearchedIndNum[-1])
         listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
 
         return listdictNeighborPopAfEva
@@ -373,7 +379,11 @@ class GA:
         listdictNeighborPop = []
         iTempLocalSearchedIndNum = len(self.listaLocalSearchTestRepeat)
         # 强local search
-        for i in range(self.iLocalSearchIndNumEveGen):  # Do local search process for the best 10 individuals
+        if self.iPopSize < self.iLocalSearchIndNumEveGen:
+            tem_LSedIndNumEveGen = self.iPopSize
+        else:
+            tem_LSedIndNumEveGen = self.iLocalSearchIndNumEveGen
+        for i in range(tem_LSedIndNumEveGen):  # Do local search process for the best 10 individuals
             # 检查个体i在前面有没有被搜索过
             boolNotSearched = True
             for t in range(len(self.listaLocalSearchTestRepeat)):
