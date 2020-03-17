@@ -22,6 +22,7 @@ import pickle
 from instanceGeneration import Instances
 import matplotlib.pyplot as plt
 from scipy.stats import ttest_ind
+from scipy.stats import wilcoxon
 
 
 def do_something(x):
@@ -46,6 +47,32 @@ def test():
 
 if __name__ == '__main__':
 
+    # 非参数统计检验
+    data1 = [3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3924.682919, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985]
+    data2 = [3881.664985, 3881.664985, 3924.682919, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3924.682919, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 4095.421708, 3924.682919, 3881.664985, 3924.682919, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3881.664985, 3924.682919, 3924.682919]
+    if len(data2) == 0:
+        print('哈')
+        for i in range(30):
+            data2.append(5269.682811)
+
+    stat, p = wilcoxon(data1, data2)
+    print(type(p))
+    print("stat为：%f" %stat, "p值为：%f" %p)
+    
+    a=3881
+    b=a+1
+    num1=0
+    num2=0
+    for i in range(30):
+        if data1[i] > a and data1[i] < b:
+            num1 += 1
+        if data2[i] > a and data2[i] < b:
+            num2 += 1
+    print("data1's OR:", num1/30)
+    print("data2's OR:", num2/30)
+
+
+    """ # 画图
     fileName = "0600-node_RFLPm=2_GAMLS_225Gen_"
     iGenNum = 225
     # 下面4个list都需要手动输入数据来画图
@@ -83,10 +110,11 @@ if __name__ == '__main__':
     ax1.set_xlabel("# of Generation")
     ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
     ax2.set_ylabel("Diversity Metric")
-    plt.savefig(fileName + '_Curve(m=2)-ins'+str(4)+'.svg')
+    plt.savefig(fileName + '_Curve(m=2)-ins'+str(4)+'.svg') """
 
 
-    """ f = open('10-nodeInstances', 'rb')
+    """ # 画示意图
+    f = open('10-nodeInstances', 'rb')
     ins = pickle.load(f)
     x = ins.a_2d_SitesCoordi[:, 0]  # 横坐标数组，大小[0, 1]
     y = ins.a_2d_SitesCoordi[:, 1]  # 纵坐标数组
@@ -97,6 +125,7 @@ if __name__ == '__main__':
     # plt.plot(list(x), list(y), 'bo', alpha=0.6, ms=2)  # 另一种绘制散点图的方法, ms控制点的大小
     plt.show() """
 
+    # T-test统计检验
     # data1 = [11784.86154, 11780.24259, 11732.45826, 11997.97669, 11860.6101, 12383.62024, 11906.57894, 12205.63157, 11784.86154, 11902.06717]
     # data2 = [11780.24259, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11732.45826, 11780.24259]
     # stat,p = ttest_ind(data1,data2)

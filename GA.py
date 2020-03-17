@@ -122,15 +122,23 @@ class GA:
         At least 2 facilitis are established to garantee the reliable.
         The modify of "fp_aChromosome" will influent the real aChromosome.
         '''
+        print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        print(fp_aChromosome)
         iRealFaciNum = sum(fp_aChromosome)
         aSortedFixedCost = sorted(self.obInstance.aiFixedCost)  # default ascending order
         while iRealFaciNum < 2:
-            for j in range(2):
+            for j in range(self.iIndLen):
                 if fp_aChromosome[np.where(self.obInstance.aiFixedCost == aSortedFixedCost[j])[0][0]] == 1:
+                    print(np.where(self.obInstance.aiFixedCost==aSortedFixedCost[j])[0][0])
+                    print("###################################################")
+                    print(fp_aChromosome)
                     continue
                 else:
                     fp_aChromosome[np.where(self.obInstance.aiFixedCost == aSortedFixedCost[j])[0][0]] = 1
                     iRealFaciNum += 1
+                    if iRealFaciNum >= 2:
+                        break
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
 
     def funSelectParents(self, fp_listdictCurrPop, fp_iIndIndex=None):
         '''
