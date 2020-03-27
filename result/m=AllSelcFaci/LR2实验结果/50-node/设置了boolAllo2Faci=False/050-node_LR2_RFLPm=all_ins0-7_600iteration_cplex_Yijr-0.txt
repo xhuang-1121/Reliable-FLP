@@ -1,0 +1,40 @@
+
+
+Upperbound for every instance0-1:
+[8741.491232205593, 8214.953618954503]
+
+Lowerbound for every instance0-1:
+[1017.0, 1034.0]
+
+CPU time for every instance0-1:
+[62201.363010344, 62819.889196902004]
+------------------------------------------------------
+
+Upperbound for every instance2-3:
+[8291.582154939326, 9202.685773205509]
+
+Lowerbound for every instance2-3:
+[1020.0, 1038.0]
+
+CPU time for every instance2-3:
+[63013.019369208, 62705.311733656]
+------------------------------------------------------
+
+Upperbound for every instance4-5:
+[8200.14374561905, 8865.321311921994]
+
+Lowerbound for every instance4-5:
+[1094.0, 1092.0]
+
+CPU time for every instance4-5:
+[59467.086573429, 59483.310535242]
+------------------------------------------------------
+
+Upperbound for every instance6-7:
+[9921.711351401633, 8776.737009359189]
+
+Lowerbound for every instance6-7:
+[1070.0, 1066.0]
+
+CPU time for every instance6-7:
+[60662.724959410996, 61245.562650129]
