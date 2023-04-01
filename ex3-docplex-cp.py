@@ -13,6 +13,7 @@ Belgium, Denmark, France, Germany, Luxembourg, and the Netherlands.
 Please refer to documentation for appropriate setup of solving configuration.
 """
 
+
 from docplex.cp.model import CpoModel
 
 # Create CPO model
@@ -26,7 +27,7 @@ Germany     = mdl.integer_var(0, 3, "Germany")
 Luxembourg  = mdl.integer_var(0, 3, "Luxembourg")
 Netherlands = mdl.integer_var(0, 3, "Netherlands")
 ALL_COUNTRIES = (Belgium, Denmark, France, Germany, Luxembourg, Netherlands)
-        
+
 # Create constraints
 mdl.add(Belgium != France)
 mdl.add(Belgium != Germany)
@@ -40,12 +41,10 @@ mdl.add(Germany != Netherlands)
 
 # Solve model
 print("\nSolving model....")
-msol = mdl.solve(TimeLimit=10)
-
-if msol:
-    print("Solution status: " + msol.get_solve_status())
+if msol := mdl.solve(TimeLimit=10):
+    print(f"Solution status: {msol.get_solve_status()}")
     colors = ("Yellow", "Red", "Green", "Blue")
     for country in ALL_COUNTRIES:
-        print("   " + country.get_name() + ": " + colors[msol[country]])
+        print(f"   {country.get_name()}: {colors[msol[country]]}")
 else:
     print("No solution found")

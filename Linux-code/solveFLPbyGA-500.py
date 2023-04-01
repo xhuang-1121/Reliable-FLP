@@ -36,9 +36,8 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     columnNum = a_2d_fEveInsEveRunObjValue.shape[1]
     workbook = xlwt.Workbook()  # 新建一个工作簿
     sheet = workbook.add_sheet('sheet1')
-    for i in range(rowNum):
-        for j in range(columnNum):
-            sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
+    for i, j in itertools.product(range(rowNum), range(columnNum)):
+        sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
     workbook.save(excelName)
 
 
@@ -65,7 +64,7 @@ def funGA():
         # genetic algorithm
         listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 不算第0代
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
-            print("Begin: ins " + str(i) + ", Runs " + str(i))
+            print(f"Begin: ins {str(i)}, Runs {str(i)}")
             print("Running......")
             cpuStart = time.process_time()
             # 调用GA求解
@@ -84,7 +83,7 @@ def funGA():
             new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitness]
             for g in range(len(listGenNum)):
                 listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
-        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        print(f"End: ins {str(i)}, Runs {str(j)}" + "\n")
         # 平均每次运行的时间
         listfAveCPUTimeEveryIns[i] /= iRunsNum
         # 平均fitness和目标函数值
@@ -134,7 +133,7 @@ def funGA_ex():
         # genetic algorithm
         listfAllDiffGenBestIndFitness = np.zeros((iGenNum + 1,)).tolist()  # 不算第0代
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
-            print("Begin: ins " + str(i) + ", Runs " + str(j))
+            print(f"Begin: ins {str(i)}, Runs {str(j)}")
             print("Running......")
             cpuStart = time.process_time()
             # 调用GA求解
@@ -153,7 +152,7 @@ def funGA_ex():
             new_listfBestIndFitness = [fitness * 1000 for fitness in listfBestIndFitness]
             for g in range(len(listGenNum)):
                 listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
-        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        print(f"End: ins {str(i)}, Runs {str(j)}" + "\n")
         # 平均每次运行的时间
         print("CPU Time:")
         listfAveCPUTimeEveryIns[i] /= iRunsNum
@@ -199,11 +198,11 @@ def funGA_parallel():
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool()
-    list_iRunsIndex = [i for i in range(iRunsNum)]
+    list_iRunsIndex = list(range(iRunsNum))
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLP/LinuxExperimentsResults/500-node/500-node_GA_EveInsData(m=2).txt', 'a')
     f = open(insName, 'rb')
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     listtuple_combOfInsRuns = list(itertools.product(list_ins, list_iRunsIndex))
@@ -264,7 +263,7 @@ def funCplex_mp():
     listfCpuTimeEveIns = []
     textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\100-node_Cplex_mp_data(m=2).txt', 'a')
     for i in range(iInsNum):
-        print("Begin: Ins " + str(i))
+        print(f"Begin: Ins {str(i)}")
         print("Running......")
         ins = pickle.load(f)
         cpu_start = time.process_time()
@@ -275,7 +274,7 @@ def funCplex_mp():
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = sol.get_objective_value()
         print(sol.solve_details)
-        print("End: Ins " + str(i) + "\n")
+        print(f"End: Ins {str(i)}" + "\n")
     textFile.write('\nEvery instance\'s objective value got by Cplex-mp method:\n')
     textFile.write(str(afOptimalValueEveIns))
     textFile.write('\n\nEvery instance\'s CPU time used by Cplex-mp method:\n')
@@ -289,7 +288,7 @@ def funCplex_cp():
     listfCpuTimeEveIns = []
     textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\100-node_Cplex_cp_data(m=2).txt', 'a')
     for i in range(iInsNum):
-        print("Begin: Ins " + str(i))
+        print(f"Begin: Ins {str(i)}")
         print("Running......")
         ins = pickle.load(f)
         cpu_start = time.process_time()
@@ -299,8 +298,8 @@ def funCplex_cp():
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
-        print("Solution status: " + cpsol.get_solve_status())
-        print("End: Ins " + str(i) + "\n")
+        print(f"Solution status: {cpsol.get_solve_status()}")
+        print(f"End: Ins {str(i)}" + "\n")
     textFile.write('\nEvery instance\'s objective value got by Cplex-cp method:\n')
     textFile.write(str(afOptimalValueEveIns))
     textFile.write('\n\nEvery instance\'s CPU time used by Cplex-cp method:\n')
@@ -314,7 +313,7 @@ def funCplex_cp_ex():
     afOptimalValueEveIns = np.zeros((iInsNum,))
     listfCpuTimeEveIns = []
     for i in range(iInsNum):
-        print("Begin: Ins " + str(i))
+        print(f"Begin: Ins {str(i)}")
         print("Running......")
         ins = pickle.load(f)
         cpu_start = time.process_time()
@@ -324,8 +323,8 @@ def funCplex_cp_ex():
         cpu_end = time.process_time()
         listfCpuTimeEveIns.append(cpu_end - cpu_start)
         afOptimalValueEveIns[i] = cpsol.get_objective_values()[0]
-        print("Solution status: " + cpsol.get_solve_status())
-        print("End: Ins " + str(i) + "\n")
+        print(f"Solution status: {cpsol.get_solve_status()}")
+        print(f"End: Ins {str(i)}" + "\n")
         print("CPU Time:", cpu_end - cpu_start)
 
 
@@ -340,7 +339,7 @@ def funLR2():
     f = open(insName, 'rb')
     textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\100-node_LR2(m=2).txt', 'a')
     for i in range(iInsNum):
-        print("Begin: Ins " + str(i))
+        print(f"Begin: Ins {str(i)}")
         print("Running......")
         ins = pickle.load(f)
         LagRela = LR2.LagrangianRelaxation(listLRParameters, ins)
@@ -348,7 +347,7 @@ def funLR2():
         upperBound, lowerBound = LagRela.funLR_main()
         listfUBEveIns.append(upperBound)
         listfLBEveIns.append(lowerBound)
-        print("End: Ins " + str(i) + "\n")
+        print(f"End: Ins {str(i)}" + "\n")
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")
@@ -365,7 +364,7 @@ def funLR1():
     listfLBEveIns = []
     f = open(insName, 'rb')
     textFile = open('E:\\VSCodeSpace\\PythonWorkspace\\GAforFLP\\100-node_LR1(m=2).txt', 'a')
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         LagRela = LR1.LagrangianRelaxation(listLRParameters, ins)
         LagRela.funInitMultiplierLambda()

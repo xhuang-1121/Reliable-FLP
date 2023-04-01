@@ -44,9 +44,8 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     columnNum = a_2d_fEveInsEveRunObjValue.shape[1]
     workbook = xlwt.Workbook()  # 新建一个工作簿
     sheet = workbook.add_sheet('sheet1')
-    for i in range(rowNum):
-        for j in range(columnNum):
-            sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
+    for i, j in itertools.product(range(rowNum), range(columnNum)):
+        sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
     workbook.save(excelName)
 
 def funGAMLS2_DM_single(fp_tuple_combOfInsRuns):
@@ -73,14 +72,14 @@ def funGAMLS2_DM_parallel():
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
 
-    textFile = open(fileName + '_GAMLS2_EveInsData_AllRunsAve(m=2).txt', 'a')
-    plotFile = open(fileName + '_GAMLS2_PlotData(m=2).txt', 'a')
+    textFile = open(f'{fileName}_GAMLS2_EveInsData_AllRunsAve(m=2).txt', 'a')
+    plotFile = open(f'{fileName}_GAMLS2_PlotData(m=2).txt', 'a')
 
-    list_iRunsIndex = [i for i in range(iRunsNum)]
+    list_iRunsIndex = list(range(iRunsNum))
     f = open(insName, 'rb')
     pool = Pool()
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     listtuple_combOfInsRuns = list(itertools.product(list_ins, list_iRunsIndex))
@@ -149,7 +148,7 @@ def funGAMLS2_DM_parallel():
         plotFile.write("\n------------------------new instance-----------------------------\n")
 
         fig = plt.figure()
-        listGenIndex = [g for g in range(iGenNum + 1)]
+        listGenIndex = list(range(iGenNum + 1))
         ax1 = fig.add_subplot(111)
         l1, = ax1.plot(listGenIndex, listfEveGenBestIndFitness_AllRunsAve)
         # 右方Y轴
@@ -160,9 +159,10 @@ def funGAMLS2_DM_parallel():
         ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
         ax3.set_xlabel("# of Fitness Evaluation")
         listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
-        listFeXCoordinate = []
-        for f in range(len(listfFeIndex)):
-            listFeXCoordinate.append(listiAveFitEvaNumByThisGen[int(listfFeIndex[f])])
+        listFeXCoordinate = [
+            listiAveFitEvaNumByThisGen[int(listfFeIndex[f])]
+            for f in range(len(listfFeIndex))
+        ]
         # print("listFeXCoordinate:", listFeXCoordinate)
         ax3.plot(listGenIndex, listfEveGenBestIndFitness_AllRunsAve, '--')
         ax3.set_xticks(listfFeIndex)
@@ -174,7 +174,7 @@ def funGAMLS2_DM_parallel():
         ax1.set_xlabel("# of Generation")
         ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
         ax2.set_ylabel("Diversity Metric")
-        plt.savefig(fileName + '_GAMLS2_Curve(m=2)-ins'+str(i)+'.svg')
+        plt.savefig(f'{fileName}_GAMLS2_Curve(m=2)-ins{str(i)}.svg')
 
     # 将数据写入text文件
     textFile.write('Average CPU time of 10 runs for each instance:\n')
@@ -184,7 +184,7 @@ def funGAMLS2_DM_parallel():
     textFile.write('\n\nAverage objective value of 10 runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
     textFile.write("\n-----------------------------------------------------\n")
-    excelName = fileName + '_GAMLS2_ObjValue_EveInsEveRun(m=2).xls'
+    excelName = f'{fileName}_GAMLS2_ObjValue_EveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 if __name__ == '__main__':

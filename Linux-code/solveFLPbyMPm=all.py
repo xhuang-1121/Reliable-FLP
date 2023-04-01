@@ -49,7 +49,7 @@ def funCplex_mp_parallel():
     f = open(insName, 'rb')
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/100-node_Cplex_mp_data(m=all).txt', 'a')
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     pool = Pool()

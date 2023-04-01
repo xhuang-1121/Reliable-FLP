@@ -40,9 +40,8 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     columnNum = a_2d_fEveInsEveRunObjValue.shape[1]
     workbook = xlwt.Workbook()  # 新建一个工作簿
     sheet = workbook.add_sheet('sheet1')
-    for i in range(rowNum):
-        for j in range(columnNum):
-            sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
+    for i, j in itertools.product(range(rowNum), range(columnNum)):
+        sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
     workbook.save(excelName)
 
 
@@ -67,13 +66,13 @@ def funGA_DM_parallel():
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
-    textFile = open(fileName + '_GADM_EveInsData(m=2).txt', 'a')
-    plotFile = open(fileName + '_GADM_PlotData(m=2).txt', 'a')
-    list_iRunsIndex = [i for i in range(iRunsNum)]
+    textFile = open(f'{fileName}_GADM_EveInsData(m=2).txt', 'a')
+    plotFile = open(f'{fileName}_GADM_PlotData(m=2).txt', 'a')
+    list_iRunsIndex = list(range(iRunsNum))
     f = open(insName, 'rb')
     pool = Pool()
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     listtuple_combOfInsRuns = list(itertools.product(list_ins, list_iRunsIndex))
@@ -125,9 +124,9 @@ def funGA_DM_parallel():
         plotFile.write("\n\nlistiAveFitEvaNumByThisGen:\n")
         plotFile.write(str(listiAveFitEvaNumByThisGen))
         plotFile.write("\n------------------------new instance-----------------------------\n")
-        
+
         fig = plt.figure()
-        listGenIndex = [g for g in range(iGenNum + 1)]
+        listGenIndex = list(range(iGenNum + 1))
         ax1 = fig.add_subplot(111)
         l1, = ax1.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
         # 右方Y轴
@@ -140,10 +139,10 @@ def funGA_DM_parallel():
         ax3 = ax1.twiny()  # 与ax1共用1个y轴，在上方生成自己的x轴
         ax3.set_xlabel("# of Fitness Evaluation")
         listfFeIndex = list(np.linspace(0, iGenNum, num=10+1))
-        # print("listFeIndex:", listfFeIndex)
-        listFeXCoordinate = []
-        for f in range(len(listfFeIndex)):
-            listFeXCoordinate.append(listiAveFitEvaNumByThisGen[int(listfFeIndex[f])])
+        listFeXCoordinate = [
+            listiAveFitEvaNumByThisGen[int(listfFeIndex[f])]
+            for f in range(len(listfFeIndex))
+        ]
         # print("listFeXCoordinate:", listFeXCoordinate)
         ax3.plot(listGenIndex, listfAveBestIndFitnessEveryGen)
         ax3.set_xticks(listfFeIndex)
@@ -151,11 +150,11 @@ def funGA_DM_parallel():
         for label in ax3.xaxis.get_ticklabels():
             label.set_fontsize(6)
         plt.legend(handles=[l1, l2, l3], labels=['Fitness curve', '0-HDR', '1-HDR'], loc='best')
-        
+
         ax1.set_xlabel("# of Generation")
         ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
         ax2.set_ylabel("Diversity Metric")
-        plt.savefig(fileName + '_GADM_Curve(m=2)-ins'+str(i)+'.svg')
+        plt.savefig(f'{fileName}_GADM_Curve(m=2)-ins{str(i)}.svg')
 
     '''
     ax1.set_xlabel("# of Generation")
@@ -163,16 +162,18 @@ def funGA_DM_parallel():
     ax2.set_ylabel("Diversity Metric")
     plt.savefig(fileName + '_GADM_Curve(m=2).svg')
     '''
-    
+
     # 将数据写入text文件
-    textFile.write('Average CPU time of '+str(iRunsNum)+' runs for each instance:\n')
+    textFile.write(
+        f'Average CPU time of {str(iRunsNum)}' + ' runs for each instance:\n'
+    )
     textFile.write(str(listfAveCPUTimeEveryIns))
     textFile.write('\n\nAverage fitness of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveFitnessEveryIns))
     textFile.write('\n\nAverage objective value of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveObjValueEveryIns))
     textFile.write("\n-----------------------------------------------------\n")
-    excelName = fileName + '_GADM_ObjValueEveInsEveRun(m=2).xls'
+    excelName = f'{fileName}_GADM_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 
@@ -181,8 +182,8 @@ def funGA_DM():
     listfAveObjValueEveryIns = np.zeros((iInsNum,)).tolist()
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
-    textFile = open(fileName + '_GADM_EveInsData(m=2).txt', 'a')
-    plotFile = open(fileName + '_GADM_PlotData(m=2).txt', 'a')
+    textFile = open(f'{fileName}_GADM_EveInsData(m=2).txt', 'a')
+    plotFile = open(f'{fileName}_GADM_PlotData(m=2).txt', 'a')
     f = open(insName, 'rb')
     for i in range(iActualInsNum):  # 8 instances
         ins = pickle.load(f)
@@ -191,7 +192,7 @@ def funGA_DM():
         listiAllDiffGenDiversityMetric1 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
         listiAllDiffGenDiversityMetric2 = np.zeros((iGenNum + 1,)).tolist()  # 算上第0代
         for j in range(iRunsNum):  # Every instance has 10 runs experiments.
-            print("Begin: ins " + str(i) + ", Runs " + str(i))
+            print(f"Begin: ins {str(i)}, Runs {str(i)}")
             print("Running......")
             cpuStart = time.process_time()
             # 调用GADM求解
@@ -212,7 +213,7 @@ def funGA_DM():
                 listfAllDiffGenBestIndFitness[g] += new_listfBestIndFitness[g]
                 listiAllDiffGenDiversityMetric1[g] += listiDiversityMetric1[g]
                 listiAllDiffGenDiversityMetric2[g] += listiDiversityMetric2[g]
-        print("End: ins " + str(i) + ", Runs " + str(j) + "\n")
+        print(f"End: ins {str(i)}, Runs {str(j)}" + "\n")
         # 平均每次运行的时间
         listfAveCPUTimeEveryIns[i] /= iRunsNum
         # 平均fitness和目标函数值
@@ -241,9 +242,11 @@ def funGA_DM():
     ax1.set_xlabel("# of Generation")
     ax1.set_ylabel("Fitness Of Best Individual (× 1e-3)")
     ax2.set_ylabel("Diversity Metric")
-    plt.savefig(fileName + '_GADM_Curve(m=2).svg')
+    plt.savefig(f'{fileName}_GADM_Curve(m=2).svg')
     # 将数据写入text文件
-    textFile.write('Average CPU time of '+str(iRunsNum)+' runs for each instance:\n')
+    textFile.write(
+        f'Average CPU time of {str(iRunsNum)}' + ' runs for each instance:\n'
+    )
     textFile.write(str(listfAveCPUTimeEveryIns))
     textFile.write('\n\nAverage fitness of '+str(iRunsNum)+' runs for each instance:\n')
     textFile.write(str(listfAveFitnessEveryIns))
@@ -251,7 +254,7 @@ def funGA_DM():
     textFile.write(str(listfAveObjValueEveryIns))
     textFile.write("\n-----------------------------------------------------\n")
     # np.savetxt("100-node_GA_ObjValueEveInsEveRun(m=2).txt", a_2d_fEveInsEveRunObjValue)
-    excelName = fileName + '_GADM_ObjValueEveInsEveRun(m=2).xls'
+    excelName = f'{fileName}_GADM_ObjValueEveInsEveRun(m=2).xls'
     funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue)
 
 

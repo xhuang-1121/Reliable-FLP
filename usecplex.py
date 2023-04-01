@@ -20,10 +20,10 @@ class CPLEX:
         # creat decision variables list
         listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
         listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
-        # construct objective function
-        objFunction = 0
-        for i in range(self.iCandidateFaciNum):
-            objFunction += self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+        objFunction = sum(
+            self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+            for i in range(self.iCandidateFaciNum)
+        )
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
@@ -37,16 +37,26 @@ class CPLEX:
         # add constraints
         for i in range(self.iCandidateFaciNum):
             for r in range(2):  # 只分配两个设施
-                cons1 = 0
-                for j in range(self.iCandidateFaciNum):
-                    cons1 += listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                cons1 = sum(
+                    listDeciVarY[
+                        i * pow(self.iCandidateFaciNum, 2)
+                        + j * self.iCandidateFaciNum
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(cons1 == 1)  # constraint 1
 
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                cons3 = 0
-                for r in range(2):  # 只分配两个设施
-                    cons3 += listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                cons3 = sum(
+                    listDeciVarY[
+                        i * pow(self.iCandidateFaciNum, 2)
+                        + j * self.iCandidateFaciNum
+                        + r
+                    ]
+                    for r in range(2)
+                )
                 self.model.add_constraint(cons3 <= listDeciVarX[j])  # constraint 3
 
         cons4 = 0
@@ -59,10 +69,10 @@ class CPLEX:
         # creat decision variables list
         listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
         listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
-        # construct objective function
-        objFunction = 0
-        for i in range(self.iCandidateFaciNum):
-            objFunction += self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+        objFunction = sum(
+            self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+            for i in range(self.iCandidateFaciNum)
+        )
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
@@ -83,9 +93,14 @@ class CPLEX:
         # constraint b
         for i in range(self.iCandidateFaciNum):
             for r in range(self.iCandidateFaciNum):
-                consB = 0
-                for j in range(self.iCandidateFaciNum):
-                    consB += listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                consB = sum(
+                    listDeciVarY[
+                        pow(self.iCandidateFaciNum, 2) * i
+                        + self.iCandidateFaciNum * j
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(consB <= 1)
 
         # constraint c
@@ -107,9 +122,14 @@ class CPLEX:
         # # constraint e
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                consE = 0
-                for r in range(self.iCandidateFaciNum):
-                    consE += listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                consE = sum(
+                    listDeciVarY[
+                        pow(self.iCandidateFaciNum, 2) * i
+                        + self.iCandidateFaciNum * j
+                        + r
+                    ]
+                    for r in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(consE == listDeciVarX[j])
 
         # constraint 4
@@ -120,10 +140,10 @@ class CPLEX:
         # creat decision variables list
         listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
         listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
-        # construct objective function
-        objFunction = 0
-        for i in range(self.iCandidateFaciNum):
-            objFunction += self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+        objFunction = sum(
+            self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+            for i in range(self.iCandidateFaciNum)
+        )
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
@@ -145,9 +165,14 @@ class CPLEX:
         # constraint b
         for i in range(self.iCandidateFaciNum):
             for r in range(self.iCandidateFaciNum):
-                consB = 0
-                for j in range(self.iCandidateFaciNum):
-                    consB += listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                consB = sum(
+                    listDeciVarY[
+                        pow(self.iCandidateFaciNum, 2) * i
+                        + self.iCandidateFaciNum * j
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(consB <= 1)
 
         # constraint c
@@ -169,9 +194,14 @@ class CPLEX:
         # # constraint e
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                consE = 0
-                for r in range(self.iCandidateFaciNum):
-                    consE += listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                consE = sum(
+                    listDeciVarY[
+                        pow(self.iCandidateFaciNum, 2) * i
+                        + self.iCandidateFaciNum * j
+                        + r
+                    ]
+                    for r in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(consE <= listDeciVarX[j])
 
         # constraint 4
@@ -182,10 +212,10 @@ class CPLEX:
         # creat decision variables list
         listDeciVarX = self.cpomodel.binary_var_list(self.iCandidateFaciNum, name='X')
         listDeciVarY = self.cpomodel.binary_var_list(pow(self.iCandidateFaciNum, 3), name='Y')
-        # construct objective function
-        objFunction = 0
-        for i in range(self.iCandidateFaciNum):
-            objFunction += self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+        objFunction = sum(
+            self.obInstance.aiFixedCost[i] * listDeciVarX[i]
+            for i in range(self.iCandidateFaciNum)
+        )
         listTranCost = []
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
@@ -199,21 +229,29 @@ class CPLEX:
         # add constraints
         for i in range(self.iCandidateFaciNum):
             for r in range(2):  # 只分配两个设施
-                cons1 = 0
-                for j in range(self.iCandidateFaciNum):
-                    cons1 += listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                cons1 = sum(
+                    listDeciVarY[
+                        i * pow(self.iCandidateFaciNum, 2)
+                        + j * self.iCandidateFaciNum
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.cpomodel.add(cons1 == 1)  # constraint 1
 
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
-                cons3 = 0
-                for r in range(2):  # 只分配两个设施
-                    cons3 += listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                cons3 = sum(
+                    listDeciVarY[
+                        i * pow(self.iCandidateFaciNum, 2)
+                        + j * self.iCandidateFaciNum
+                        + r
+                    ]
+                    for r in range(2)
+                )
                 self.cpomodel.add(cons3 <= listDeciVarX[j])  # constraint 3
 
-        cons4 = 0
-        for j in range(self.iCandidateFaciNum):
-            cons4 += listDeciVarX[j]
+        cons4 = sum(listDeciVarX[j] for j in range(self.iCandidateFaciNum))
         self.cpomodel.add(cons4 >= 2)
 
 
@@ -282,11 +320,14 @@ if __name__ == '__main__':
     cpsol = cplexSolver.cpomodel.solve(RelativeOptimalityTolerance=0.00, TimeLimit=10)
     # cpsol = cplexSolver.cpomodel.solve()
     cpu_end = time.process_time()
-    print("Solution status: " + cpsol.get_solve_status())
+    print(f"Solution status: {cpsol.get_solve_status()}")
     print("CPU time:", cpu_end-cpu_start)
 
     for i in range(cplexSolver.iCandidateFaciNum):
         if cpsol.get_all_var_solutions()[i].get_value() == 1:
-            print(cpsol.get_all_var_solutions()[i].get_name() + " =", cpsol.get_all_var_solutions()[i].get_value())  # 打印出Xj==1的决策变量
+            print(
+                f"{cpsol.get_all_var_solutions()[i].get_name()} =",
+                cpsol.get_all_var_solutions()[i].get_value(),
+            )
     # print(cpsol)
     # print(type(cpsol))

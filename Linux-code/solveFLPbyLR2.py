@@ -50,7 +50,7 @@ def funLR2_parallel():
     textFile = open('600-node_LR2(m=2).txt', 'a')
     # textFile = open('600-node_LR2(m=all).txt', 'a')
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     pool = Pool()
@@ -81,7 +81,7 @@ def funLR2():
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=2/500-node_LR2(m=2).txt', 'a')
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLPm=AllSelcFaci/500-node_LR2(m=all).txt', 'a')
     for i in range(iInsNum):
-        print("Begin: Ins " + str(i))
+        print(f"Begin: Ins {str(i)}")
         print("Running......")
         ins = pickle.load(f)
         LagRela = LR2.LagrangianRelaxation(listLRParameters, ins)
@@ -89,7 +89,7 @@ def funLR2():
         upperBound, lowerBound = LagRela.funLR_main()
         listfUBEveIns.append(upperBound)
         listfLBEveIns.append(lowerBound)
-        print("End: Ins " + str(i) + "\n")
+        print(f"End: Ins {str(i)}" + "\n")
     textFile.write("\nUpperbound for every instance:\n")
     textFile.write(str(listfUBEveIns))
     textFile.write("\n\nLowerbound for every instance:\n")

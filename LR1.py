@@ -37,8 +37,6 @@ class LagrangianRelaxation:
         aLocaSolXj = np.zeros(self.iCandidateSitesNum, dtype=np.int)
         # allocation decision
         a3dAlloSolYijr = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum), dtype=np.int)
-        # relaxation problem's object value, lower bound
-        fLowerBound = 0
         # Psi, i.e., ψ
         a3dPsi = np.zeros((self.iCandidateSitesNum, self.iCandidateSitesNum, self.iCandidateSitesNum))
         for i in range(self.iCandidateSitesNum):
@@ -60,7 +58,7 @@ class LagrangianRelaxation:
             else:
                 count += 1
         i = j = 0
-        if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
+        if count in [self.iCandidateSitesNum, self.iCandidateSitesNum - 1]:
             # np.where() return "tuple" type data. The element of the tuple is arrays.
             aSortedGamma = sorted(afGamma)  # default ascending order
             aIndexJ = np.where(afGamma < aSortedGamma[2])[0]
@@ -78,13 +76,18 @@ class LagrangianRelaxation:
             else:
                 for j in range(self.iCandidateSitesNum):
                     for r in range(self.iRealFaciNum):
-                        if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] < 0) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
+                        if (
+                            aLocaSolXj[j] == 1
+                            and a3dPsi[i][j][r] < 0
+                            and a3dPsi[i][j][r]
+                            == np.min(a3dPsi[i][j][: self.iRealFaciNum])
+                        ):
                         # if (aLocaSolXj[j] == 1) and (a3dPsi[i][j][r] == np.min(a3dPsi[i][j][0:self.iRealFaciNum])):
                             a3dAlloSolYijr[i][j][r] = 1
         i = j = r = 0
-        # Compute lower bound
-        for j in range(self.iCandidateSitesNum):
-            fLowerBound += afGamma[j] * aLocaSolXj[j]
+        fLowerBound = sum(
+            afGamma[j] * aLocaSolXj[j] for j in range(self.iCandidateSitesNum)
+        )
         j = 0
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iRealFaciNum):
@@ -102,9 +105,10 @@ class LagrangianRelaxation:
     def funCheckFeasible(self, fp_a3dAlloSolYijr):
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iRealFaciNum):
-                constraint1 = 0
-                for j in range(self.iCandidateSitesNum):
-                    constraint1 += fp_a3dAlloSolYijr[i][j][r]
+                constraint1 = sum(
+                    fp_a3dAlloSolYijr[i][j][r]
+                    for j in range(self.iCandidateSitesNum)
+                )
                 if constraint1 != 1:
                     return False
         return True
@@ -128,8 +132,7 @@ class LagrangianRelaxation:
                 fp_aLocaSolXj, self.obInstance.af_2d_TransCost[i])
 
             aSelcSitesTransCostForI = [
-                value for (index, value) in enumerate(aSelcSitesTransCostForI)
-                if value != 0
+                value for value in aSelcSitesTransCostForI if value != 0
             ]
             # if site i is selected, it would be missed in the above step and its trans cost is 0.
             if fp_aLocaSolXj[i] == 1:
@@ -146,8 +149,7 @@ class LagrangianRelaxation:
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
 
-        fUpperBound = w1 + self.fAlpha * w2
-        return fUpperBound
+        return w1 + self.fAlpha * w2
 
     def funUpdateMultiplierLambda(self, fp_lowerBound_n):
         '''
@@ -161,9 +163,7 @@ class LagrangianRelaxation:
         aFaciIndex = np.where(self.aLocaSolXj == 1)[0]
         for i in range(self.iCandidateSitesNum):
             for r in range(self.iRealFaciNum):
-                sumYijr = 0
-                for j in aFaciIndex:
-                    sumYijr += self.a3dAlloSolYijr[i][j][r]
+                sumYijr = sum(self.a3dAlloSolYijr[i][j][r] for j in aFaciIndex)
                 arrayOfSumYijr[i][r] = sumYijr  # Stored and used for compute λ_(n+1)
                 fTempA += pow((1 - sumYijr), 2)
         i = j = r = 0
@@ -172,8 +172,7 @@ class LagrangianRelaxation:
             for r in range(self.iCandidateSitesNum):
                 a2dLambda_nextIter[i][r] = self.a2dLambda[i][r] + stepSize * (1 - arrayOfSumYijr[i][r])
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
-                if a2dLambda_nextIter[i][r] < 0:
-                    a2dLambda_nextIter[i][r] = 0
+                a2dLambda_nextIter[i][r] = max(a2dLambda_nextIter[i][r], 0)
         return a2dLambda_nextIter
 
     def funInitMultiplierLambda(self):
@@ -210,7 +209,7 @@ class LagrangianRelaxation:
         nonImproveIterNum = 0
         UBupdateNum = 0
         LBupdateNum = 0
-        while meetTerminationCondition is False:
+        while not meetTerminationCondition:
             aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
             fUpperBound = self.funUpperBound(aLocaSolXj)
             if fLowerBound > fUpperBound:
@@ -264,7 +263,7 @@ if __name__ == '__main__':
     LR.funInitMultiplierLambda()
     UBupdateNum = 0
     LBupdateNum = 0
-    while meetTerminationCondition is False:
+    while not meetTerminationCondition:
         aLocaSolXj, LR.a3dAlloSolYijr, LR.feasible, fLowerBound = LR.funSolveRelaxationProblem()
         fUpperBound = LR.funUpperBound(aLocaSolXj)
         if fLowerBound > fUpperBound:

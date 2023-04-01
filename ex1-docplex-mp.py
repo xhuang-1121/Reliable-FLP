@@ -1,6 +1,6 @@
 from docplex.mp.model import Model  # 导出库，只用这一个就够了
 model = Model()  # 创建模型
-var_list = [i for i in range(0, 7)]  # 创建列表
+var_list = list(range(7))
 X = model.binary_var_list(var_list, lb=0, name='X')  # 创建变量列表
 # 设定目标函数
 model.maximize(11 * X[0] + 9 * X[1] + 29 * X[2] + 9 * X[3] + 21 * X[4] + 31 * X[5] + 22 * X[6])
