@@ -36,9 +36,8 @@ def funWriteExcel(excelName, a_2d_fEveInsEveRunObjValue):
     columnNum = a_2d_fEveInsEveRunObjValue.shape[1]
     workbook = xlwt.Workbook()  # 新建一个工作簿
     sheet = workbook.add_sheet('sheet1')
-    for i in range(rowNum):
-        for j in range(columnNum):
-            sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
+    for i, j in itertools.product(range(rowNum), range(columnNum)):
+        sheet.write(i, j, a_2d_fEveInsEveRunObjValue[i][j])
     workbook.save(excelName)
 
 
@@ -70,10 +69,10 @@ def funGA_parallel_occupation():
     listfAveCPUTimeEveryIns = np.zeros((iInsNum,)).tolist()
     a_2d_fEveInsEveRunObjValue = np.zeros((iInsNum, iRunsNum))
     pool = Pool()
-    list_iRunsIndex = [i for i in range(iRunsNum)]
+    list_iRunsIndex = list(range(iRunsNum))
     f = open(insName, 'rb')
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     listtuple_combOfInsRuns = list(itertools.product(list_ins, list_iRunsIndex))

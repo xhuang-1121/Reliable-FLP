@@ -59,12 +59,11 @@ if __name__ == '__main__':
     iCoordinateUB = 1
     fFaciFailProb = 0.05
     listPara = [iSitesNum, iScenNum, iDemandLB, iDemandUB, iFixedCostLB, iFixedCostUB, iCoordinateLB, iCoordinateUB, fFaciFailProb]
-    f = open('600-nodeInstances', 'wb')
-    for i in range(iInsNum):
-        generateInstances = Instances(listPara)
-        generateInstances.funGenerateInstances()
-        pickle.dump(generateInstances, f)
-    f.close()
+    with open('600-nodeInstances', 'wb') as f:
+        for _ in range(iInsNum):
+            generateInstances = Instances(listPara)
+            generateInstances.funGenerateInstances()
+            pickle.dump(generateInstances, f)
     # f = open('30-nodeInstances', 'rb')
     # ins1 = pickle.load(f)
     # ins2 = pickle.load(f)

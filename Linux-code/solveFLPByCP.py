@@ -32,7 +32,7 @@ def funCplex_cp_single(fp_obInstance):
     fObjectiveValue = cpsol.get_objective_values()[0]
     fGap = cpsol.get_objective_gaps()[0]
     fBound = cpsol.get_objective_bounds()[0]
-    print("Solution status: " + cpsol.get_solve_status())
+    print(f"Solution status: {cpsol.get_solve_status()}")
     print("End: cplex-cp")
     return cpuTime, fObjectiveValue, fGap, fBound
 
@@ -46,7 +46,7 @@ def funCplex_cp_parallel():
     f = open(insName, 'rb')
     textFile = open('/home/zhanghan/pythonworkspace/reliableFLP/500-node_Cplex_cp_data(m=2).txt', 'a')
     list_ins = []
-    for i in range(iInsNum):
+    for _ in range(iInsNum):
         ins = pickle.load(f)
         list_ins.append(ins)
     pool = Pool()

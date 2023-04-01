@@ -83,10 +83,7 @@ class LagrangianRelaxation:
         # Phi, i.e., φ
         aPhi = np.zeros((self.iCandidateSitesNum,))
         # compute Psi
-        if self.boolAllo2Faci is True:
-            iAlloFaciNum = 2
-        else:
-            iAlloFaciNum = self.iCandidateSitesNum
+        iAlloFaciNum = 2 if self.boolAllo2Faci is True else self.iCandidateSitesNum
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 for r in range(iAlloFaciNum):
@@ -94,9 +91,7 @@ class LagrangianRelaxation:
         i = j = r = 0
         # compute Phi
         for j in range(self.iCandidateSitesNum):
-            fSumLambda = 0
-            for i in range(self.iCandidateSitesNum):
-                fSumLambda += self.a2dLambda[i][j]
+            fSumLambda = sum(self.a2dLambda[i][j] for i in range(self.iCandidateSitesNum))
             aPhi[j] = self.obInstance.aiFixedCost[j] - fSumLambda
         i = j = 0
         # determine Xj
@@ -106,7 +101,7 @@ class LagrangianRelaxation:
                 aLocaSolXj[j] = 1
             else:
                 count += 1
-        if count == self.iCandidateSitesNum or count == (self.iCandidateSitesNum - 1):
+        if count in [self.iCandidateSitesNum, self.iCandidateSitesNum - 1]:
             aSortedPhi = sorted(aPhi)  # default increasing order
             aIndexJ = np.where(aPhi <= aSortedPhi[2])[0]
             aLocaSolXj[aIndexJ[0]] = 1
@@ -114,11 +109,7 @@ class LagrangianRelaxation:
         j = 0
         # Until now we get X_j. Next we need to determine Y_{ijr}.
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
-        if self.boolAllo2Faci is True:
-            iAlloFaciNum = 2
-        else:
-            iAlloFaciNum = self.iRealFaciNum
-
+        iAlloFaciNum = 2 if self.boolAllo2Faci is True else self.iRealFaciNum
         # 怎样分配Yijr
         if self.iHowToAlloYijr == 1:
             # 1-下面这段，j可以作为同一i的不同r
@@ -149,9 +140,7 @@ class LagrangianRelaxation:
                     for i in range(self.iCandidateSitesNum):
                         for r in range(iAlloFaciNum):
                             if a3dPsi[i][j][r] < 0:
-                                aPsiIJr = []
-                                for r2 in range(iAlloFaciNum):
-                                    aPsiIJr.append(a3dPsi[i][j][r2])
+                                aPsiIJr = [a3dPsi[i][j][r2] for r2 in range(iAlloFaciNum)]
                                 aSortedPsiIJr = sorted(aPsiIJr)
                                 if a3dPsi[i][j][r] == aSortedPsiIJr[0]:
                                     a3dAlloSolYijr[i][j][r] = 1
@@ -182,10 +171,7 @@ class LagrangianRelaxation:
         # Phi, i.e., φ
         aPhi = np.zeros((self.iCandidateSitesNum,))
         # compute Psi
-        if self.boolAllo2Faci is True:
-            iAlloFaciNum = 2
-        else:
-            iAlloFaciNum = self.iCandidateSitesNum
+        iAlloFaciNum = 2 if self.boolAllo2Faci is True else self.iCandidateSitesNum
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
                 for r in range(iAlloFaciNum):
@@ -193,9 +179,7 @@ class LagrangianRelaxation:
         i = j = r = 0
         # compute Phi
         for j in range(self.iCandidateSitesNum):
-            fSumLambda = 0
-            for i in range(self.iCandidateSitesNum):
-                fSumLambda += self.a2dLambda[i][j]
+            fSumLambda = sum(self.a2dLambda[i][j] for i in range(self.iCandidateSitesNum))
             aPhi[j] = self.obInstance.aiFixedCost[j] - fSumLambda
         i = j = 0
 
@@ -208,18 +192,20 @@ class LagrangianRelaxation:
 
         sol = self.model.solve()
         for i in range(self.iCandidateFaciNum):
-            aLocaSolXj[i] = sol.get_value('X_'+str(i))
-            # if sol.get_value('X_'+str(i)) == 1:
-            #     print('X_'+str(i)+" =", 1)
+            aLocaSolXj[i] = sol.get_value(f'X_{str(i)}')
+                # if sol.get_value('X_'+str(i)) == 1:
+                #     print('X_'+str(i)+" =", 1)
         self.iRealFaciNum = np.sum(aLocaSolXj == 1)
 
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
                 for r in range(self.iCandidateFaciNum):
-                    a3dAlloSolYijr[i][j][r] = sol.get_value('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r))
-                    # if sol.get_value('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)) == 1:
-                    #     iAlloNum += 1
-                    #     print('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)+" =", 1)
+                    a3dAlloSolYijr[i][j][r] = sol.get_value(
+                        f'Y_{str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)}'
+                    )
+                                # if sol.get_value('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)) == 1:
+                                #     iAlloNum += 1
+                                #     print('Y_'+str(pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r)+" =", 1)
 
         fLowerBound = sol.get_objective_value()
         # feasible = self.funCheckFeasible(aLocaSolXj, a3dAlloSolYijr)
@@ -227,14 +213,9 @@ class LagrangianRelaxation:
         return aLocaSolXj, a3dAlloSolYijr, feasible, fLowerBound
 
     def fun_fillMpModel_Allo2Faci(self, aPhi, a3dPsi):
-        # # creat decision variables list, 这个放在了__init__函数中，否则总是警告变量名重复
-        # listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
-        # listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
-
-        # construct objective function
-        objFunction = 0
-        for j in range(self.iCandidateFaciNum):
-            objFunction += aPhi[j] * self.listDeciVarX[j]
+        objFunction = sum(
+            aPhi[j] * self.listDeciVarX[j] for j in range(self.iCandidateFaciNum)
+        )
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
                 for r in range(2):  # 只分配两个设施
@@ -244,9 +225,14 @@ class LagrangianRelaxation:
         # add constraints
         for i in range(self.iCandidateFaciNum):
             for r in range(2):  # 只分配两个设施
-                cons1 = 0
-                for j in range(self.iCandidateFaciNum):
-                    cons1 += self.listDeciVarY[i * pow(self.iCandidateFaciNum, 2) + j * self.iCandidateFaciNum + r]
+                cons1 = sum(
+                    self.listDeciVarY[
+                        i * pow(self.iCandidateFaciNum, 2)
+                        + j * self.iCandidateFaciNum
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(cons1 == 1)  # constraint 1
 
         cons4 = 0
@@ -256,14 +242,9 @@ class LagrangianRelaxation:
         self.model.add_constraint(cons4 >= 2)
 
     def fun_fillMpModel_AlloAllSelcFaci(self, aPhi, a3dPsi):
-        # # creat decision variables list, 这个放在了__init__函数中，否则总是警告变量名重复
-        # listDeciVarX = self.model.binary_var_list(self.iCandidateFaciNum, lb=0, name='X')
-        # listDeciVarY = self.model.binary_var_list(pow(self.iCandidateFaciNum, 3), lb=0, name='Y')
-
-        # construct objective function
-        objFunction = 0
-        for j in range(self.iCandidateFaciNum):
-            objFunction += aPhi[j] * self.listDeciVarX[j]
+        objFunction = sum(
+            aPhi[j] * self.listDeciVarX[j] for j in range(self.iCandidateFaciNum)
+        )
         for i in range(self.iCandidateFaciNum):
             for j in range(self.iCandidateFaciNum):
                 for r in range(self.iCandidateFaciNum):  # 不只分配两个设施
@@ -280,9 +261,14 @@ class LagrangianRelaxation:
         # constraint b
         for i in range(self.iCandidateFaciNum):
             for r in range(self.iCandidateFaciNum):
-                consB = 0
-                for j in range(self.iCandidateFaciNum):
-                    consB += self.listDeciVarY[pow(self.iCandidateFaciNum, 2) * i + self.iCandidateFaciNum * j + r]
+                consB = sum(
+                    self.listDeciVarY[
+                        pow(self.iCandidateFaciNum, 2) * i
+                        + self.iCandidateFaciNum * j
+                        + r
+                    ]
+                    for j in range(self.iCandidateFaciNum)
+                )
                 self.model.add_constraint(consB <= 1)
 
         # constraint d
@@ -319,8 +305,7 @@ class LagrangianRelaxation:
                 fp_aLocaSolXj, self.obInstance.af_2d_TransCost[i])
 
             aSelcSitesTransCostForI = [
-                value for (index, value) in enumerate(aSelcSitesTransCostForI)
-                if value != 0
+                value for value in aSelcSitesTransCostForI if value != 0
             ]
             # if site i is selected, it would be missed in the above step and its trans cost is 0.
             if fp_aLocaSolXj[i] == 1:
@@ -330,10 +315,7 @@ class LagrangianRelaxation:
             aSortedTransCostForI = sorted(aSelcSitesTransCostForI)  # ascending order
 
             # j represents the facilities that allocated to the customer i
-            if self.boolAllo2Faci is True:
-                iAlloFaciNum = 2
-            else:
-                iAlloFaciNum = iSelcSitesNum
+            iAlloFaciNum = 2 if self.boolAllo2Faci is True else iSelcSitesNum
             # for j in range(iSelcSitesNum):  # 把所有Xj=1的点都分给i
             # for j in range(2):  # 每个i只有两个级别的供应点
             for j in range(iAlloFaciNum):
@@ -341,8 +323,7 @@ class LagrangianRelaxation:
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
                     j] * pow(p, j) * (1 - p)
 
-        fUpperBound = w1 + self.fAlpha * w2
-        return fUpperBound
+        return w1 + self.fAlpha * w2
 
     def funUpdateMultiplierLambda(self, fp_aLocaSolXj, fp_lowerBound_n):
         '''
@@ -355,9 +336,7 @@ class LagrangianRelaxation:
         # "aFaciIndex" stores indexes of selected facilities.
         for i in range(self.iCandidateSitesNum):
             for j in range(self.iCandidateSitesNum):
-                sumYijr = 0
-                for r in range(self.iRealFaciNum):
-                    sumYijr += self.a3dAlloSolYijr[i][j][r]
+                sumYijr = sum(self.a3dAlloSolYijr[i][j][r] for r in range(self.iRealFaciNum))
                 arrayOfSumYijr[i][j] = sumYijr  # Stored and used for compute λ_(n+1)
                 denominatorOfStepSize += pow((sumYijr - fp_aLocaSolXj[j]), 2)
         i = j = r = 0
@@ -366,8 +345,7 @@ class LagrangianRelaxation:
             for j in range(self.iCandidateSitesNum):
                 a2dLambda_nextIter[i][j] = self.a2dLambda[i][j] + stepSize * (arrayOfSumYijr[i][j] - fp_aLocaSolXj[j])
                 # 以下出自https://www.cnblogs.com/Hand-Head/articles/8861153.html
-                if a2dLambda_nextIter[i][j] < 0:
-                    a2dLambda_nextIter[i][j] = 0
+                a2dLambda_nextIter[i][j] = max(a2dLambda_nextIter[i][j], 0)
         # print((a2dLambda_nextIter == self.a2dLambda).all())
         return a2dLambda_nextIter
 
@@ -405,7 +383,7 @@ class LagrangianRelaxation:
         UBupdateNum = 0
         LBupdateNum = 0
         self.funInitUpperBound_greedy()
-        while meetTerminationCondition is False:
+        while not meetTerminationCondition:
             if self.boolCallCplexOrNot is False:  # 不调用cplex
                 aLocaSolXj, self.a3dAlloSolYijr, self.feasible, fLowerBound = self.funSolveRelaxationProblem()
             else:  # 调用cplex
@@ -463,11 +441,7 @@ if __name__ == '__main__':
 
     @sys.argv = [0:xx.py, 1:cplex/notcplex, 2:1/2/3, 3:iMaxIterationNum]
     '''
-    if sys.argv[1] == 'cplex':
-        boolCallCplexOrNot = True
-    else:
-        boolCallCplexOrNot = False
-
+    boolCallCplexOrNot = sys.argv[1] == 'cplex'
     if sys.argv[2] == '1':
         iHowToAlloYijr = 1
     elif sys.argv[2] == '2':
@@ -498,8 +472,8 @@ if __name__ == '__main__':
     print("Objective value: ", optimialValue)
     print(sol.solve_details)  # 获取解的详细信息，如时间，gap值等
     for i in range(cplexSolver.iCandidateFaciNum):
-        if sol.get_value('X_'+str(i)) == 1:
-            print('X_'+str(i)+" =", 1)
+        if sol.get_value(f'X_{str(i)}') == 1:
+            print(f'X_{str(i)} =', 1)
     print("-------------------------------------------------------------")
     # # genetic algorithm
     # iGenNum = 10

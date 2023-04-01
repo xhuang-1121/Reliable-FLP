@@ -40,7 +40,7 @@ def fun_single(fp_num):
 
 def fun_parallel_occupation():
     pool = Pool()
-    list_iRunsIndex = [i for i in range(iInsNum*iRunsNum)]
+    list_iRunsIndex = list(range(iInsNum*iRunsNum))
     f = open(insName, 'rb')
     pool.map(fun_single, list_iRunsIndex)
     pool.close()

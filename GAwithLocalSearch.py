@@ -45,7 +45,7 @@ class GA:
         @return listdictInitPop
         '''
         listdictInitPop = []
-        for i in range(self.iPopSize):
+        for _ in range(self.iPopSize):
             ind = Individal(self.iIndLen, self.local_state)
             listdictInitPop.append({
                 'chromosome': ind.aChromosome,
@@ -74,8 +74,7 @@ class GA:
                 fp_aChromosome, self.obInstance.af_2d_TransCost[i])
 
             aSelcSitesTransCostForI = [
-                value for (index, value) in enumerate(aSelcSitesTransCostForI)
-                if value != 0
+                value for value in aSelcSitesTransCostForI if value != 0
             ]
             # if site i is selected, it would be missed in the above step and its trans cost is 0.
             if fp_aChromosome[i] == 1:
@@ -88,10 +87,7 @@ class GA:
             # w1 += self.obInstance.aiDemands[i] * aSortedTransCostForI[0]
 
             # j represents the facilities that allocated to the customer i
-            if self.boolAllo2Faci is True:
-                iAlloFaciNum = 2  # 每个i只有两个级别的供应点
-            else:
-                iAlloFaciNum = len(aSortedTransCostForI)  # 把所有Xj=1的点都分给i
+            iAlloFaciNum = 2 if self.boolAllo2Faci is True else len(aSortedTransCostForI)
             for j in range(iAlloFaciNum):
                 p = self.obInstance.fFaciFailProb
                 w2 += self.obInstance.aiDemands[i] * aSortedTransCostForI[
@@ -114,8 +110,7 @@ class GA:
 
             fp_listdictPop[i]['fitness'], fp_listdictPop[i]['objectValue'] = self.funEvaluateInd(
                 fp_listdictPop[i]['chromosome'])
-        listdictPopAfEval = fp_listdictPop
-        return listdictPopAfEval
+        return fp_listdictPop
 
     def funModifyInd(self, fp_aChromosome):
         '''
@@ -148,21 +143,26 @@ class GA:
         Note that our fitness value is the larger the better.
         @return: listdictParents
         '''
-        fProb = []
         listdictParents = []
         fFitnessSum = sum(ind['fitness'] for ind in fp_listdictCurrPop)
-        for i in range(len(fp_listdictCurrPop)):
-            fProb.append(fp_listdictCurrPop[i]['fitness'] / fFitnessSum)
+        fProb = [
+            fp_listdictCurrPop[i]['fitness'] / fFitnessSum
+            for i in range(len(fp_listdictCurrPop))
+        ]
         if fp_iIndIndex is None:
             adictParents = self.local_state.choice(fp_listdictCurrPop,
                                             size=2,
                                             p=fProb)
-            listdictParents.append(adictParents[0])
-            listdictParents.append(adictParents[1])
+            listdictParents.extend((adictParents[0], adictParents[1]))
         else:
-            listdictParents.append(fp_listdictCurrPop[fp_iIndIndex])
-            listdictParents.append(
-                self.local_state.choice(fp_listdictCurrPop, size=1, p=fProb)[0])
+            listdictParents.extend(
+                (
+                    fp_listdictCurrPop[fp_iIndIndex],
+                    self.local_state.choice(fp_listdictCurrPop, size=1, p=fProb)[
+                        0
+                    ],
+                )
+            )
         # 根据实验，listdictParents跟fp_listdictCurrPop是一体的，改变一个会影响另外一个
         return listdictParents
 
@@ -200,16 +200,12 @@ class GA:
                     else:
                         aOffs1[j] = listdictParents[1]['chromosome'][j]
                         aOffs2[j] = listdictParents[0]['chromosome'][j]
-                listdictPopAfCros.append({
-                    'chromosome': aOffs1,
-                    'fitness': 0.0,
-                    'objectValue': 0.0
-                })
-                listdictPopAfCros.append({
-                    'chromosome': aOffs2,
-                    'fitness': 0.0,
-                    'objectValue': 0.0
-                })
+                listdictPopAfCros.extend(
+                    (
+                        {'chromosome': aOffs1, 'fitness': 0.0, 'objectValue': 0.0},
+                        {'chromosome': aOffs2, 'fitness': 0.0, 'objectValue': 0.0},
+                    )
+                )
         # "listdictPopAfCros" has no relation to "fp_listdictCurrPop"
         return listdictPopAfCros
 
@@ -223,10 +219,7 @@ class GA:
                 if self.local_state.rand() < self.fMutRate:
                     fp_listdictPopAfCros[i]['chromosome'][j] = (
                         fp_listdictPopAfCros[i]['chromosome'][j] + 1) % 2
-        listdictPopAfMuta = self.funEvaluatePop(
-            fp_listdictPopAfCros)  # evaluate population
-        # listdictPopAfMuta is the same one as fp_listdictPopAfCros
-        return listdictPopAfMuta
+        return self.funEvaluatePop(fp_listdictPopAfCros)
 
     def funSurvival(self, fp_listdictCurrPop, fp_listdictPopAfMuta):
         '''
@@ -261,9 +254,7 @@ class GA:
                 dictInd['fitness'] = 0
                 dictInd['objectValue'] = 0
                 listdictNeighborPop.append(dictInd)
-        # evaluate the listdictNeighborPop
-        listdictNeighborPopAfEva = self.funEvaluatePop(listdictNeighborPop)
-        return listdictNeighborPopAfEva
+        return self.funEvaluatePop(listdictNeighborPop)
 
     def funGA_main(self):
         '''
@@ -274,10 +265,8 @@ class GA:
         # By this time, both CurrPop and InitPop point to the same variable.
         listdictCurrPop = self.funEvaluatePop(listdictInitPop)
         listdictCurrPop = copy.deepcopy(listdictInitPop)
-        # record the fitness of the best individual for every generation
-        listfBestIndFitness = []
         listdictBestInd = heapq.nlargest(1, listdictInitPop, key=lambda x: x['fitness'])
-        listfBestIndFitness.append(listdictBestInd[0]['fitness'])
+        listfBestIndFitness = [listdictBestInd[0]['fitness']]
         for gen in range(self.iGenNum):
             print("Gen:", gen)
             listdictPopAfCros = self.funCrossover(listdictCurrPop,
